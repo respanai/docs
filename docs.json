@@ -730,60 +730,6 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Respan SDK",
-            "pages": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "/sdks/python/quickstart",
-                  "/sdks/python/examples"
-                ]
-              },
-              {
-                "group": "Logs",
-                "pages": [
-                  "/sdks/python/logs/overview",
-                  "/sdks/python/logs/create",
-                  "/sdks/python/logs/list"
-                ]
-              },
-              {
-                "group": "Prompts",
-                "pages": [
-                  "/sdks/python/prompts/overview",
-                  "/sdks/python/prompts/create",
-                  "/sdks/python/prompts/list",
-                  "/sdks/python/prompts/get",
-                  "/sdks/python/prompts/update",
-                  "/sdks/python/prompts/delete",
-                  "/sdks/python/prompts/create-version",
-                  "/sdks/python/prompts/list-versions",
-                  "/sdks/python/prompts/get-version",
-                  "/sdks/python/prompts/update-version"
-                ]
-              },
-              {
-                "group": "Experiments",
-                "pages": [
-                  "/sdks/python/experiments/overview",
-                  "/sdks/python/experiments/create",
-                  "/sdks/python/experiments/list",
-                  "/sdks/python/experiments/get",
-                  "/sdks/python/experiments/update",
-                  "/sdks/python/experiments/delete",
-                  "/sdks/python/experiments/add-rows",
-                  "/sdks/python/experiments/remove-rows",
-                  "/sdks/python/experiments/update-rows",
-                  "/sdks/python/experiments/add-columns",
-                  "/sdks/python/experiments/remove-columns",
-                  "/sdks/python/experiments/update-columns",
-                  "/sdks/python/experiments/run-experiment",
-                  "/sdks/python/experiments/run-experiment-evals"
-                ]
-              }
-            ]
           }
         ]
       },
