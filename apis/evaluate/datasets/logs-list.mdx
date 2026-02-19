@@ -13,12 +13,13 @@ Query Parameters:
 
 - page (integer, optional): Page number for pagination (default: 1)
 - page_size (integer, optional): Number of results per page (default: varies based on pagination settings)
-- order_by (string, optional): Field to order results by (default: unique_id)
+- sort_by (string, optional): Field to order results by (default: unique_id). Use a leading minus for descending (e.g. `-timestamp`).
+- retrieval_mode (string, optional): Set to `"async"` for background full-object loading when listing many logs.
 
 Request example:
 
 ```bash
-GET /api/datasets/{dataset_id}/logs/list/?page=1&page_size=10
+GET /api/datasets/{dataset_id}/logs/list/?page=1&page_size=10&sort_by=-timestamp
 ```
 
 Response (200 OK):
@@ -26,7 +27,7 @@ Response (200 OK):
 ```json
 {
   "count": 250,
-  "next": "https://api.respan.ai/api/datasets/{dataset_id}/logs/list/?page=2&page_size=10",
+  "next": "https://api.respan.ai/api/datasets/{dataset_id}/logs/list/?page=2&page_size=10&sort_by=-timestamp",
   "previous": null,
   "results": [
     {
@@ -55,7 +56,7 @@ Response (200 OK):
       "scores": [...]
     }
   ],
-  "filter_options": {
+  "filters_data": {
     "status_code": {...},
     "model": {...},
     ...
@@ -63,13 +64,17 @@ Response (200 OK):
 }
 ```
 
+<Note>
+The same URL supports **POST** with a JSON body for complex filtering (e.g. `filters`, `page`, `page_size`). See [List logs with filters](/apis/evaluate/datasets/logs-list-post) for the POST contract.
+</Note>
+
 Response Fields:
 
 - count (integer): Total number of logs in the dataset matching the filters
 - next (string|null): URL for the next page of results
 - previous (string|null): URL for the previous page of results
 - results (array): Array of log objects with their details
-- filter_options (object): Available filter options for the dataset logs
+- filters_data (object): Available filter options for the dataset logs (for building filter UIs)
 - Each log includes:
   - Basic log metadata (id, timestamp, tokens, cost, latency, etc.)
   - Model information
