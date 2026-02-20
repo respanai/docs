@@ -50,49 +50,40 @@ curl -X POST "https://api.respan.ai/api/datasets/{dataset_id}/logs/list/" \
 
 Response (200 OK):
 
+The response uses the same paginated shape as the GET endpoint: `count`, `next`, `previous`, `results`, and `filters_data`.
+
 ```json
 {
-  "logs": [
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
     {
-      "id": "log_12345",
+      "unique_id": "log_12345",
       "dataset_id": "dataset_67890",
-      "messages": [
-        {
-          "role": "user",
-          "content": "What is the capital of France?"
-        },
-        {
-          "role": "assistant",
-          "content": "The capital of France is Paris."
-        }
-      ],
+      "input": "...",
+      "output": "...",
+      "metadata": { "user_id": "user123", "session_id": "session456" },
       "model": "gpt-4",
-      "parameters": {
-        "temperature": 0.7,
-        "max_tokens": 150
-      },
-      "metadata": {
-        "user_id": "user123",
-        "session_id": "session456"
-      },
-      "created_at": "2024-01-15T10:30:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
+      "timestamp": "2024-01-15T10:30:00Z",
+      "annotation_status": "pending",
+      "scores": []
     }
   ],
-  "total": 1,
-  "page": 1,
-  "page_size": 50,
-  "total_pages": 1
+  "filters_data": {
+    "model": {...},
+    "status_code": {...}
+  }
 }
 ```
 
 Response Fields:
 
-- `logs`: Array of log objects matching the filters
-- `total`: Total number of logs matching the filters
-- `page`: Current page number
-- `page_size`: Number of logs per page
-- `total_pages`: Total number of pages
+- `count` (integer): Total number of logs matching the filters
+- `next` (string|null): URL for the next page of results
+- `previous` (string|null): URL for the previous page of results
+- `results` (array): Array of log objects matching the filters
+- `filters_data` (object): Available filter options for building filter UIs
 
 Errors:
 
