@@ -19,7 +19,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
       <Step title="Add the MCP server">
         <CodeGroup>
         ```bash Claude Code (CLI)
-        claude mcp add --transport http respan https://mcp.keywordsai.co/mcp
+        claude mcp add --transport http respan https://mcp.respan.ai/mcp
         ```
 
         ```bash Claude Desktop
@@ -32,7 +32,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp"
+              "url": "https://mcp.respan.ai/mcp"
             }
           }
         }
@@ -42,7 +42,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp"
+              "url": "https://mcp.respan.ai/mcp"
             }
           }
         }
@@ -68,7 +68,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 
     <Steps>
       <Step title="Sign in">
-        Go to [mcp.keywordsai.co/login](https://mcp.keywordsai.co/login) and sign in with **Google** or **email/password**.
+        Go to [mcp.respan.ai/login](https://mcp.respan.ai/login) and sign in with **Google** or **email/password**.
       </Step>
       <Step title="Copy your token">
         After signing in, you'll see your access token and a ready-to-paste MCP config. Copy either one.
@@ -81,7 +81,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_jwt_token"
               }
@@ -95,7 +95,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_jwt_token"
               }
@@ -109,7 +109,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_jwt_token"
               }
@@ -140,7 +140,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_respan_api_key"
               }
@@ -154,7 +154,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_respan_api_key"
               }
@@ -168,7 +168,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
         {
           "mcpServers": {
             "respan": {
-              "url": "https://mcp.keywordsai.co/mcp",
+              "url": "https://mcp.respan.ai/mcp",
               "headers": {
                 "Authorization": "Bearer your_respan_api_key"
               }
@@ -311,7 +311,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 | Method | How it works | Best For |
 |--------|-------------|----------|
 | **OAuth** | Tool opens browser for sign-in | Claude Code, Claude Desktop, Cursor |
-| **JWT Token** | Sign in at [mcp.keywordsai.co/login](https://mcp.keywordsai.co/login), copy token | Fallback when OAuth fails |
+| **JWT Token** | Sign in at [mcp.respan.ai/login](https://mcp.respan.ai/login), copy token | Fallback when OAuth fails |
 | **API Key** | Use key from [platform.respan.ai](https://platform.respan.ai/platform/api/api-keys) | Programmatic access, scripts |
 | **Local Stdio** | `RESPAN_API_KEY` env var | Personal development, offline use |
 | **Private HTTP** | Vercel environment variable | Teams, shared access |
@@ -320,29 +320,155 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 
 ## Enterprise configuration
 
-For enterprise users with a custom API endpoint (e.g., `endpoint.respan.ai`), you can override the default API base URL.
+Enterprise users have a dedicated MCP endpoint that automatically routes to the enterprise API (`endpoint.respan.ai`). Use `https://mcp.respan.ai/mcp/enterprise` instead of `https://mcp.respan.ai/mcp`.
 
 <Tabs>
-  <Tab title="HTTP Mode">
-    Add the `respan-api-base-url` header:
+  <Tab title="OAuth">
+    Connect using OAuth with the enterprise endpoint. Your tool will open a browser window for enterprise sign-in.
 
-    ```json
+    <CodeGroup>
+    ```bash Claude Code (CLI)
+    claude mcp add --transport http respan https://mcp.respan.ai/mcp/enterprise
+    ```
+
+    ```json Claude Desktop (config)
     {
       "mcpServers": {
         "respan": {
-          "url": "https://mcp.keywordsai.co/mcp",
-          "headers": {
-            "Authorization": "Bearer your_token_or_api_key",
-            "respan-api-base-url": "https://endpoint.respan.ai/api"
-          }
+          "url": "https://mcp.respan.ai/mcp/enterprise"
         }
       }
     }
     ```
+
+    ```json Cursor (~/.cursor/mcp.json)
+    {
+      "mcpServers": {
+        "respan": {
+          "url": "https://mcp.respan.ai/mcp/enterprise"
+        }
+      }
+    }
+    ```
+    </CodeGroup>
   </Tab>
-  <Tab title="Stdio Mode">
-    Add the `RESPAN_API_BASE_URL` environment variable:
-    
+
+  <Tab title="JWT Token">
+    Sign in through the enterprise login page and copy your access token.
+
+    <Steps>
+      <Step title="Sign in">
+        Go to [mcp.respan.ai/login?enterprise=true](https://mcp.respan.ai/login?enterprise=true) and sign in with **Google** or **email/password**.
+      </Step>
+      <Step title="Copy your token">
+        After signing in, you'll see your access token and a ready-to-paste MCP config. Copy either one.
+      </Step>
+      <Step title="Configure your AI tool">
+        Add to your MCP configuration file:
+
+        <CodeGroup>
+        ```json Cursor (~/.cursor/mcp.json)
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_jwt_token"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json Claude Desktop (macOS)
+        // ~/Library/Application Support/Claude/claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_jwt_token"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json Claude Desktop (Windows)
+        // %APPDATA%\Claude\claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_jwt_token"
+              }
+            }
+          }
+        }
+        ```
+        </CodeGroup>
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="API Key">
+    Use your enterprise Respan API key directly.
+
+    <Steps>
+      <Step title="Get your API key">
+        Get your API key from [enterprise.respan.ai](https://enterprise.respan.ai).
+      </Step>
+      <Step title="Configure your AI tool">
+        <CodeGroup>
+        ```json Cursor (~/.cursor/mcp.json)
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_respan_api_key"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json Claude Desktop (macOS)
+        // ~/Library/Application Support/Claude/claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_respan_api_key"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json Claude Desktop (Windows)
+        // %APPDATA%\Claude\claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_respan_api_key"
+              }
+            }
+          }
+        }
+        ```
+        </CodeGroup>
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Local Stdio">
+    For local development, set the `RESPAN_API_BASE_URL` environment variable to point to the enterprise API.
+
     ```json
     {
       "mcpServers": {
@@ -360,12 +486,10 @@ For enterprise users with a custom API endpoint (e.g., `endpoint.respan.ai`), yo
   </Tab>
 </Tabs>
 
-**Supported endpoints:**
-| Endpoint | URL |
-|----------|-----|
-| Default (Cloud) | `https://api.respan.ai/api` |
-| Enterprise | `https://endpoint.respan.ai/api` |
-| Local development | `http://localhost:8000/api` |
+| Endpoint | MCP URL | API URL |
+|----------|---------|---------|
+| Default (Cloud) | `https://mcp.respan.ai/mcp` | `https://api.respan.ai/api` |
+| Enterprise | `https://mcp.respan.ai/mcp/enterprise` | `https://endpoint.respan.ai/api` |
 
 ---
 
@@ -436,7 +560,7 @@ Once connected, your AI tools have access to the following Respan features.
   </Accordion>
   <Accordion title="Authentication errors">
     1. **OAuth**: Try signing out and re-authenticating. If OAuth keeps failing in Cursor, use the JWT Token or API Key method instead.
-    2. **JWT Token**: Tokens expire — sign in again at [mcp.keywordsai.co/login](https://mcp.keywordsai.co/login) to get a fresh token.
+    2. **JWT Token**: Tokens expire — sign in again at [mcp.respan.ai/login](https://mcp.respan.ai/login) to get a fresh token.
     3. **API Key**: Verify your API key is correct and the header is `Authorization: Bearer YOUR_KEY` (not just the key).
     4. **Stdio mode**: Check the `RESPAN_API_KEY` env var is set correctly.
   </Accordion>
