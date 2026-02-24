@@ -47,6 +47,16 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
           }
         }
         ```
+
+        ```json OpenAI Codex (codex.json)
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp"
+            }
+          }
+        }
+        ```
         </CodeGroup>
       </Step>
       <Step title="Authenticate">
@@ -58,9 +68,9 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
     This is the recommended setup for most users. No keys to copy, no tokens to manage — just add the server and authenticate in your browser.
     </Tip>
 
-    <Note>
-    If OAuth fails in Cursor (which can happen occasionally), use the **JWT Token** or **API Key** method as a fallback.
-    </Note>
+    <Warning>
+    **Cursor OAuth known issue:** Cursor has a [known bug](https://forum.cursor.com/t/agent-has-trouble-detecting-available-mcp-tools/146486) where MCP tools appear connected (green dot, tool count visible) but the agent cannot discover or use them. This affects OAuth-based connections. **Use the JWT Token or API Key method instead** for reliable Cursor setup.
+    </Warning>
   </Tab>
 
   <Tab title="JWT Token">
@@ -106,6 +116,19 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 
         ```json Claude Desktop (Windows)
         // %APPDATA%\Claude\claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp",
+              "headers": {
+                "Authorization": "Bearer your_jwt_token"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json OpenAI Codex (codex.json)
         {
           "mcpServers": {
             "respan": {
@@ -165,6 +188,19 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 
         ```json Claude Desktop (Windows)
         // %APPDATA%\Claude\claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp",
+              "headers": {
+                "Authorization": "Bearer your_respan_api_key"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json OpenAI Codex (codex.json)
         {
           "mcpServers": {
             "respan": {
@@ -310,7 +346,7 @@ Respan provides an MCP server that gives your AI tools direct access to your obs
 
 | Method | How it works | Best For |
 |--------|-------------|----------|
-| **OAuth** | Tool opens browser for sign-in | Claude Code, Claude Desktop, Cursor |
+| **OAuth** | Tool opens browser for sign-in | Claude Code, Claude Desktop, Codex |
 | **JWT Token** | Sign in at [mcp.respan.ai/login](https://mcp.respan.ai/login), copy token | Fallback when OAuth fails |
 | **API Key** | Use key from [platform.respan.ai](https://platform.respan.ai/platform/api/api-keys) | Programmatic access, scripts |
 | **Local Stdio** | `RESPAN_API_KEY` env var | Personal development, offline use |
@@ -350,7 +386,21 @@ Enterprise users have a dedicated MCP endpoint that automatically routes to the 
       }
     }
     ```
+
+    ```json OpenAI Codex (codex.json)
+    {
+      "mcpServers": {
+        "respan": {
+          "url": "https://mcp.respan.ai/mcp/enterprise"
+        }
+      }
+    }
+    ```
     </CodeGroup>
+
+    <Warning>
+    **Cursor OAuth known issue:** Cursor has a [known bug](https://forum.cursor.com/t/agent-has-trouble-detecting-available-mcp-tools/146486) where MCP tools appear connected but the agent cannot discover or use them. **Use the JWT Token or API Key method instead** for reliable Cursor setup.
+    </Warning>
   </Tab>
 
   <Tab title="JWT Token">
@@ -407,6 +457,19 @@ Enterprise users have a dedicated MCP endpoint that automatically routes to the 
           }
         }
         ```
+
+        ```json OpenAI Codex (codex.json)
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_jwt_token"
+              }
+            }
+          }
+        }
+        ```
         </CodeGroup>
       </Step>
     </Steps>
@@ -450,6 +513,19 @@ Enterprise users have a dedicated MCP endpoint that automatically routes to the 
 
         ```json Claude Desktop (Windows)
         // %APPDATA%\Claude\claude_desktop_config.json
+        {
+          "mcpServers": {
+            "respan": {
+              "url": "https://mcp.respan.ai/mcp/enterprise",
+              "headers": {
+                "Authorization": "Bearer your_respan_api_key"
+              }
+            }
+          }
+        }
+        ```
+
+        ```json OpenAI Codex (codex.json)
         {
           "mcpServers": {
             "respan": {
