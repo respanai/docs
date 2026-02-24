@@ -1,0 +1,198 @@
+---
+title: "Bulk delete traces"
+api: "POST https://api.respan.ai/api/traces/bulk-delete/"
+---
+
+Deletes multiple traces matching the given filters. Uses the same filter format as the [List Traces](/apis/observe/traces/list) endpoint. Removes data from both raw span storage and the aggregated trace table.
+
+<Warning>
+The request body **must** contain a non-empty `filters` object. This prevents accidental deletion of all traces. Maximum **1,000 traces** per request — if the filter matches more, narrow your filters or use time-range pagination to delete in batches.
+</Warning>
+
+## Query Parameters
+
+<ParamField query="start_time" type="string">
+  ISO 8601 start of time range. Defaults to `end_time` minus 1 hour.
+
+  <Accordion title="Example">
+  ```json
+  "start_time": "2024-01-15T00:00:00Z"
+  ```
+  </Accordion>
+</ParamField>
+
+<ParamField query="end_time" type="string">
+  ISO 8601 end of time range. Defaults to current time.
+
+  <Accordion title="Example">
+  ```json
+  "end_time": "2024-01-15T23:59:59Z"
+  ```
+  </Accordion>
+</ParamField>
+
+<ParamField query="environment" type="string">
+  Filter by environment (e.g., `production`, `staging`).
+</ParamField>
+
+## Request Body
+
+<ParamField body="filters" type="object" required>
+  Filter object to select traces for deletion. Must be non-empty. Uses the same format as the [List Traces](/apis/observe/traces/list) endpoint.
+
+  **Available filter fields:**
+  - `trace_unique_id`, `customer_identifier`, `environment`
+  - `span_count`, `llm_call_count`, `error_count`
+  - `total_cost`, `total_tokens`, `total_prompt_tokens`, `total_completion_tokens`
+  - Custom metadata: `metadata__your_field`
+
+  See the [Filters API Reference](/apis/reference/filters_api_reference) for complete operators and format documentation.
+
+  <Accordion title="Example">
+  ```json
+  {
+    "filters": {
+      "customer_identifier": {
+        "operator": "=",
+        "value": ["user@example.com"]
+      }
+    }
+  }
+  ```
+  </Accordion>
+</ParamField>
+
+## Examples
+
+<CodeGroup>
+
+```python Python
+import requests
+
+url = "https://api.respan.ai/api/traces/bulk-delete/"
+headers = {"Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json"}
+params = {
+    "start_time": "2024-01-15T00:00:00Z",
+    "end_time": "2024-01-15T23:59:59Z"
+}
+
+# Delete all traces for a specific customer
+body = {
+    "filters": {
+        "customer_identifier": {
+            "operator": "=",
+            "value": ["user@example.com"]
+        }
+    }
+}
+
+response = requests.post(url, headers=headers, params=params, json=body)
+print(response.json())
+```
+
+```typescript TypeScript
+const url = "https://api.respan.ai/api/traces/bulk-delete/?start_time=2024-01-15T00:00:00Z&end_time=2024-01-15T23:59:59Z";
+
+const response = await fetch(url, {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    filters: {
+      customer_identifier: {
+        operator: "=",
+        value: ["user@example.com"],
+      },
+    },
+  }),
+});
+const data = await response.json();
+console.log(data);
+```
+
+```bash cURL
+curl -X POST "https://api.respan.ai/api/traces/bulk-delete/?start_time=2024-01-15T00:00:00Z&end_time=2024-01-15T23:59:59Z" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filters": {
+      "customer_identifier": {
+        "operator": "=",
+        "value": ["user@example.com"]
+      }
+    }
+  }'
+```
+
+</CodeGroup>
+
+### Delete specific traces by ID
+
+```bash
+curl -X POST "https://api.respan.ai/api/traces/bulk-delete/" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filters": {
+      "trace_unique_id": {
+        "operator": "IN",
+        "value": ["trace_abc123", "trace_def456", "trace_ghi789"]
+      }
+    }
+  }'
+```
+
+### Delete traces with errors in a specific environment
+
+```bash
+curl -X POST "https://api.respan.ai/api/traces/bulk-delete/?environment=staging" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filters": {
+      "error_count": {
+        "operator": "gt",
+        "value": [0]
+      }
+    }
+  }'
+```
+
+## Response
+
+<ResponseExample>
+```json 200 OK
+{
+  "deleted_count": 42,
+  "message": "Successfully deleted 42 traces"
+}
+```
+
+```json 200 No Matches
+{
+  "deleted_count": 0,
+  "message": "No traces matched the given filters"
+}
+```
+
+```json 400 Too Many Matches
+{
+  "error": "Filter matched more than 1000 traces. Narrow your filters or delete in smaller batches.",
+  "matched_count": 1523
+}
+```
+
+```json 400 Missing Filters
+{
+  "error": "Request body must contain a non-empty 'filters' list"
+}
+```
+</ResponseExample>
+
+## Error Responses
+
+```json 401 Unauthorized
+{ "detail": "Your API key is invalid or expired, please check your API key at https://platform.respan.ai/platform/api/api-keys" }
+```

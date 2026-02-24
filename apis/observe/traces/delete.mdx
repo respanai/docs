@@ -1,0 +1,96 @@
+---
+title: "Delete trace"
+api: "DELETE https://api.respan.ai/api/traces/{trace_unique_id}/"
+---
+
+Deletes a single trace and all its spans by `trace_unique_id`. Removes data from both raw span storage and the aggregated trace table.
+
+<Note>
+ClickHouse uses lightweight deletes (async mutations), so the API cannot confirm whether the trace actually existed. The endpoint always returns `200` whether the trace was found or not.
+</Note>
+
+## Path Parameters
+
+<ParamField path="trace_unique_id" type="string" required>
+  Unique identifier of the trace to delete.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="start_time" type="string">
+  ISO 8601 start of time range for efficient lookup. Defaults to `end_time` minus 1 hour.
+
+  <Accordion title="Example">
+  ```json
+  "start_time": "2024-01-15T00:00:00Z"
+  ```
+  </Accordion>
+</ParamField>
+
+<ParamField query="end_time" type="string">
+  ISO 8601 end of time range for efficient lookup. Defaults to current time.
+
+  <Accordion title="Example">
+  ```json
+  "end_time": "2024-01-15T23:59:59Z"
+  ```
+  </Accordion>
+</ParamField>
+
+<Note>
+Providing `start_time` and `end_time` is recommended for performance. These constrain the ClickHouse scan to the relevant time partition. If omitted, the API defaults to the last hour from the current time.
+</Note>
+
+## Examples
+
+<CodeGroup>
+
+```python Python
+import requests
+
+trace_id = "trace_abc123"
+url = f"https://api.respan.ai/api/traces/{trace_id}/"
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+params = {
+    "start_time": "2024-01-15T00:00:00Z",
+    "end_time": "2024-01-15T23:59:59Z"
+}
+
+response = requests.delete(url, headers=headers, params=params)
+print(response.json())
+```
+
+```typescript TypeScript
+const traceId = "trace_abc123";
+const url = `https://api.respan.ai/api/traces/${traceId}/?start_time=2024-01-15T00:00:00Z&end_time=2024-01-15T23:59:59Z`;
+
+const response = await fetch(url, {
+  method: "DELETE",
+  headers: { Authorization: "Bearer YOUR_API_KEY" },
+});
+const data = await response.json();
+console.log(data);
+```
+
+```bash cURL
+curl -X DELETE "https://api.respan.ai/api/traces/trace_abc123/?start_time=2024-01-15T00:00:00Z&end_time=2024-01-15T23:59:59Z" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": "Successfully deleted trace trace_abc123"
+}
+```
+</ResponseExample>
+
+## Error Responses
+
+```json 401 Unauthorized
+{ "detail": "Your API key is invalid or expired, please check your API key at https://platform.respan.ai/platform/api/api-keys" }
+```

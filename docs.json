@@ -323,6 +323,8 @@
                   "/apis/observe/traces/list",
                   "/apis/observe/traces/get",
                   "/apis/observe/traces/summary",
+                  "/apis/observe/traces/delete",
+                  "/apis/observe/traces/bulk-delete",
                   "/apis/observe/traces/traces-ingest-from-logs"
                 ]
               },
