@@ -243,6 +243,13 @@
               "/integrations/tracing/haystack",
               "/integrations/tracing/baml",
               "/integrations/tracing/instructor",
+              {
+                "group": "Anthropic Agents",
+                "pages": [
+                  "/integrations/tracing/anthropic-agents-sdk",
+                  "/integrations/tracing/anthropic-agents-sdk-js"
+                ]
+              },
               "/integrations/development-frameworks/tracing/agno",
               "/integrations/development-frameworks/tracing/braintrust",
               "/integrations/development-frameworks/tracing/superagent"

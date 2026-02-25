@@ -1,0 +1,86 @@
+---
+title: "TS/JS"
+description: "Build agent workflows with the Anthropic Agent SDK and send traces to Respan."
+---
+
+The [Anthropic Agent SDK](https://github.com/anthropics/anthropic-sdk-typescript) enables building agent workflows powered by Claude in TypeScript/JavaScript. Use the Respan exporter to capture telemetry from agent runs and send traces to Respan.
+
+## Getting started
+
+### Prerequisites
+
+Install the required dependency:
+
+```bash
+npm install @respan/exporter-anthropic-agents
+```
+
+Set up your environment variables in a `.env` file:
+
+```bash .env
+RESPAN_API_KEY=YOUR_RESPAN_API_KEY
+# Optional (default: https://api.respan.ai)
+RESPAN_BASE_URL=https://api.respan.ai
+```
+
+`RESPAN_BASE_URL` is the single base URL for all Respan services. The exporter automatically appends `/api/v1/traces/ingest` to build the full endpoint. You can also pass it directly as the `endpoint` constructor param:
+
+```typescript
+const baseUrl = process.env.RESPAN_BASE_URL || "https://api.respan.ai";
+
+const exporter = new RespanAnthropicAgentsExporter({
+  endpoint: `${baseUrl}/api/v1/traces/ingest`,
+});
+```
+
+### Hello world
+
+```typescript helloworld.ts
+import { RespanAnthropicAgentsExporter } from "@respan/exporter-anthropic-agents";
+
+const exporter = new RespanAnthropicAgentsExporter();
+
+async function main() {
+  for await (const message of exporter.query({
+    prompt: "Review this repository and summarize architecture.",
+    options: {
+      allowedTools: ["Read", "Glob", "Grep"],
+      permissionMode: "acceptEdits",
+    },
+  })) {
+    console.log(message);
+  }
+}
+
+main().catch(console.error);
+```
+
+Run the example:
+
+```bash
+npx tsx helloworld.ts
+```
+
+## Configuration
+
+All configuration can be passed directly to the constructor (takes priority over environment variables):
+
+```typescript
+const exporter = new RespanAnthropicAgentsExporter({
+  apiKey: "your_respan_key",                               // Overrides RESPAN_API_KEY
+  endpoint: "https://api.respan.ai/api/v1/traces/ingest",  // Full ingest endpoint URL
+  timeoutMs: 15000,
+  maxRetries: 3,
+  baseDelaySeconds: 1,
+  maxDelaySeconds: 30,
+});
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `apiKey` | No | Your Respan API key. Overrides `RESPAN_API_KEY`. |
+| `endpoint` | No | Full ingest endpoint URL. |
+| `timeoutMs` | No | Request timeout in milliseconds. |
+| `maxRetries` | No | Maximum number of retry attempts. |
+| `baseDelaySeconds` | No | Base delay between retries. |
+| `maxDelaySeconds` | No | Maximum delay between retries. |

@@ -1,0 +1,79 @@
+---
+title: "Python"
+description: "Build agent workflows with the Anthropic Agent SDK and send traces to Respan."
+---
+
+The [Anthropic Agent SDK](https://github.com/anthropics/anthropic-sdk-python) enables building agent workflows powered by Claude. Use the Respan exporter to capture telemetry from agent runs and send traces to Respan.
+
+## Quickstart
+
+Install the Respan exporter for the Anthropic Agent SDK, then configure it to send traces to Respan.
+
+### Prerequisites
+
+```bash
+pip install respan-exporter-anthropic-agents
+```
+
+### Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `RESPAN_API_KEY` | Yes | Your Respan API key. |
+| `RESPAN_BASE_URL` | No | Base URL for all Respan services. Defaults to `https://api.respan.ai`. |
+
+`RESPAN_BASE_URL` is the single base URL that controls where telemetry is exported. The exporter automatically appends `/api/v1/traces/ingest` to build the full endpoint.
+
+### Hello World example
+
+```python
+import asyncio
+from claude_agent_sdk import ClaudeAgentOptions
+from respan_exporter_anthropic_agents.respan_anthropic_agents_exporter import (
+    RespanAnthropicAgentsExporter,
+)
+
+exporter = RespanAnthropicAgentsExporter()
+
+async def main() -> None:
+    options = exporter.with_options(
+        options=ClaudeAgentOptions(
+            allowed_tools=["Read", "Glob", "Grep"],
+            permission_mode="acceptEdits",
+        )
+    )
+
+    async for message in exporter.query(
+        prompt="Analyze this repository and summarize architecture.",
+        options=options,
+    ):
+        print(message)
+
+asyncio.run(main())
+```
+
+## Configuration
+
+All configuration can also be passed directly to the constructor (takes priority over environment variables):
+
+```python
+exporter = RespanAnthropicAgentsExporter(
+    api_key="your_respan_key",       # Overrides RESPAN_API_KEY
+    base_url="https://api.respan.ai", # Overrides RESPAN_BASE_URL
+    endpoint="https://custom/ingest", # Full endpoint URL (overrides base_url)
+    timeout_seconds=15,
+    max_retries=3,
+    base_delay_seconds=1.0,
+    max_delay_seconds=30.0,
+)
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `api_key` | No | Your Respan API key. Overrides `RESPAN_API_KEY`. |
+| `base_url` | No | Base URL for Respan services. Overrides `RESPAN_BASE_URL`. Defaults to `https://api.respan.ai`. |
+| `endpoint` | No | Full endpoint URL. Overrides `base_url`. |
+| `timeout_seconds` | No | Request timeout in seconds. |
+| `max_retries` | No | Maximum number of retry attempts. |
+| `base_delay_seconds` | No | Base delay between retries. |
+| `max_delay_seconds` | No | Maximum delay between retries. |
