@@ -236,13 +236,6 @@
                   "/integrations/tracing/openai-agents-sdk-js"
                 ]
               },
-              "/integrations/tracing/vercel-tracing",
-              "/integrations/tracing/mastra",
-              "/integrations/tracing/langgraph",
-              "/integrations/tracing/langfuse",
-              "/integrations/tracing/haystack",
-              "/integrations/tracing/baml",
-              "/integrations/tracing/instructor",
               {
                 "group": "Anthropic Agents",
                 "pages": [
@@ -250,6 +243,13 @@
                   "/integrations/tracing/anthropic-agents-sdk-js"
                 ]
               },
+              "/integrations/tracing/vercel-tracing",
+              "/integrations/tracing/mastra",
+              "/integrations/tracing/langgraph",
+              "/integrations/tracing/langfuse",
+              "/integrations/tracing/haystack",
+              "/integrations/tracing/baml",
+              "/integrations/tracing/instructor",
               "/integrations/development-frameworks/tracing/agno",
               "/integrations/development-frameworks/tracing/braintrust",
               "/integrations/development-frameworks/tracing/superagent"
