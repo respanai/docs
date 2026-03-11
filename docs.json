@@ -219,6 +219,7 @@
                   "/integrations/tracing/baml",
                   "/integrations/tracing/instructor",
                   "/integrations/tracing/superagent",
+                  "/integrations/tracing/pydantic-ai",
                   "/integrations/tracing/langfuse",
                   "/integrations/tracing/braintrust"
                 ]
