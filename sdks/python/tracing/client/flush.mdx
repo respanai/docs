@@ -9,14 +9,14 @@ description: "Force flush all pending spans to exporters."
 flush() -> None
 ```
 
-Flushes all pending spans through the processor pipeline to exporters. Available on both `RespanTelemetry` and `RespanClient`.
+Flushes all pending spans through the processor pipeline to exporters. Available on both `Respan` and `RespanClient`.
 
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, get_client, workflow
+from respan import Respan, get_client, workflow
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="quick_task")
 def quick_task():
@@ -24,8 +24,8 @@ def quick_task():
 
 quick_task()
 
-# Flush via telemetry instance
-telemetry.flush()
+# Flush via Respan instance
+respan.flush()
 
 # Or flush via client
 get_client().flush()

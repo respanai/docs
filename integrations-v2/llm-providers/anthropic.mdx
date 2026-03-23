@@ -1,0 +1,472 @@
+---
+title: "Anthropic SDK"
+description: "Trace Anthropic SDK calls with Respan — auto-instrumented spans, gateway routing, and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Anthropic SDK?
+
+The [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-python) is the official Python client for Anthropic's Claude models, supporting messages, streaming, and tool use. Respan can auto-instrument all Anthropic calls for tracing, route them through the Respan gateway, or both.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-anthropic anthropic python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-anthropic anthropic python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```bash
+pip install anthropic python-dotenv
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-anthropic anthropic python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-anthropic anthropic python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+<Tabs>
+<Tab title="Tracing">
+```bash
+export ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+</Tab>
+<Tab title="Gateway">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No `ANTHROPIC_API_KEY` needed — the Respan gateway handles provider authentication.
+
+</Tab>
+<Tab title="Both">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No `ANTHROPIC_API_KEY` needed — the Respan gateway handles provider authentication.
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from anthropic import Anthropic
+from respan import Respan
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+
+# Initialize Respan with Anthropic instrumentation
+respan = Respan(instrumentations=[AnthropicInstrumentor()])
+
+# Calls go directly to Anthropic, auto-traced by Respan
+client = Anthropic()
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from anthropic import Anthropic
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Calls go directly to Anthropic, auto-traced by Respan
+client = Anthropic()
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from anthropic import Anthropic
+
+# Route all LLM calls through the Respan gateway
+client = Anthropic(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url="https://api.respan.ai/api/anthropic/",
+)
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from anthropic import Anthropic
+from respan import Respan
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+
+# Initialize Respan with Anthropic instrumentation
+respan = Respan(instrumentations=[AnthropicInstrumentor()])
+
+# Route all LLM calls through the Respan gateway
+client = Anthropic(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url="https://api.respan.ai/api/anthropic/",
+)
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from anthropic import Anthropic
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Route all LLM calls through the Respan gateway
+client = Anthropic(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url="https://api.respan.ai/api/anthropic/",
+)
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+<Note>
+This step applies to **Tracing** and **Both** setups. The Gateway-only setup does not produce traces.
+</Note>
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `AnthropicInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+
+respan = Respan(
+    instrumentations=[AnthropicInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+
+respan = Respan(
+    instrumentations=[AnthropicInstrumentor()],
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},  # merged with default metadata
+    ):
+        message = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": question}],
+        )
+        print(message.content[0].text)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.anthropic import AnthropicInstrumentor
+from anthropic import Anthropic
+
+respan = Respan(instrumentations=[AnthropicInstrumentor()])
+client = Anthropic()
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": f"Create a brief outline about: {topic}"},
+        ],
+    )
+    return message.content[0].text
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=2048,
+        messages=[
+            {"role": "user", "content": f"Write content from this outline: {plan}"},
+        ],
+    )
+    print(message.content[0].text)
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic message
+
+```python
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(message.content[0].text)
+```
+
+### Streaming
+
+```python
+with client.messages.stream(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Write a haiku about Python."}],
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="", flush=True)
+```
+
+### Tool calls
+
+```python
+import json
+
+tools = [
+    {
+        "name": "get_weather",
+        "description": "Get the weather for a city.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"city": {"type": "string"}},
+            "required": ["city"],
+        },
+    }
+]
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    tools=tools,
+    messages=[{"role": "user", "content": "What's the weather in Paris?"}],
+)
+
+if message.stop_reason == "tool_use":
+    tool_block = next(b for b in message.content if b.type == "tool_use")
+    result = f"Sunny, 72F in {tool_block.input['city']}"
+
+    final = client.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=1024,
+        tools=tools,
+        messages=[
+            {"role": "user", "content": "What's the weather in Paris?"},
+            {"role": "assistant", "content": message.content},
+            {"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": tool_block.id, "content": result}
+            ]},
+        ],
+    )
+    print(final.content[0].text)
+```
+
+## Gateway features
+
+<Note>
+The features below require the **Gateway** or **Both** setup from [Step 3](#initialize-and-run).
+</Note>
+
+### Switch models
+
+Change the `model` parameter to use different Claude models through the same gateway.
+
+```python
+# Claude Sonnet
+message = client.messages.create(model="claude-sonnet-4-5-20250929", max_tokens=1024, messages=messages)
+
+# Claude Haiku
+message = client.messages.create(model="claude-3-5-haiku-20241022", max_tokens=1024, messages=messages)
+
+# Claude Opus
+message = client.messages.create(model="claude-3-opus-20240229", max_tokens=1024, messages=messages)
+```
+
+See the [full model list](https://platform.respan.ai/platform/models).
+
+### Respan parameters
+
+Pass additional Respan parameters via `metadata` under the `respan_params` key for gateway features.
+
+```python
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello"}],
+    metadata={
+        "respan_params": {
+            "customer_identifier": "user_123",
+            "metadata": {"session_id": "abc123"},
+            "thread_identifier": "conversation_456",
+        }
+    },
+)
+```
+
+See [Respan parameters](/apis/develop/gateway/chat-completions#respan-parameters) for the full list.

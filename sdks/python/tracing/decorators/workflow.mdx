@@ -8,7 +8,7 @@ description: "Mark a function or class as a traced workflow (root span)."
 The `@workflow` decorator creates a root trace span. All nested `@task`, `@agent`, and `@tool` spans are captured as children under this workflow.
 
 ```python
-from respan_tracing import workflow
+from respan import workflow
 ```
 
 ## Parameters
@@ -19,13 +19,14 @@ from respan_tracing import workflow
 | `version` | `int \| None` | `None` | Version number for the workflow. |
 | `method_name` | `str \| None` | `None` | Required when decorating a class. Specifies which method to use as the entry point. |
 | `processors` | `str \| List[str] \| None` | `None` | Route this span to specific named processors. See [add_processor](/sdks/python/tracing/main/initialize#add_processor). |
+| `export_filter` | `FilterParamDict \| None` | `None` | Filter dict to control which spans are exported. Uses AND logic. See [Export filtering](#export-filtering). |
 
 ## Function usage
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task
+from respan import Respan, workflow, task
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @task(name="extract")
 def extract():
@@ -48,10 +49,10 @@ print(data_pipeline())  # [2, 4, 6]
 When decorating a class, use `method_name` to specify the entry point. Calling that method creates the workflow span.
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task
+from respan import Respan, workflow, task
 from openai import OpenAI
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 client = OpenAI()
 
 @workflow(name="analysis_workflow", method_name="run")
@@ -79,6 +80,24 @@ def debug_workflow():
 def multi_export():
     return "exported to both 'debug' and 'analytics' processors"
 ```
+
+## Export filtering
+
+Use `export_filter` to conditionally export spans based on their attributes. All conditions use AND logic.
+
+```python
+from respan import workflow
+
+# Only export workflow spans that ended with an error
+@workflow(
+    name="monitored_workflow",
+    export_filter={"status_code": {"operator": "", "value": "ERROR"}}
+)
+def monitored_workflow():
+    return "only exported if the span has ERROR status"
+```
+
+Supported operators: `""` (equals), `"not"`, `"gt"`, `"gte"`, `"lt"`, `"lte"`, `"contains"`, `"icontains"`, `"startswith"`, `"endswith"`, `"regex"`, `"in"`, `"not_in"`, `"empty"`, `"not_empty"`.
 
 ## Best practices
 

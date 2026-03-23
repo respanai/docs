@@ -1,0 +1,443 @@
+---
+title: "Amazon Bedrock"
+description: "Trace Amazon Bedrock calls with Respan — auto-instrumented spans, gateway routing, and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Amazon Bedrock?
+
+[Amazon Bedrock](https://docs.aws.amazon.com/bedrock/) is a fully managed service that offers foundation models from leading AI providers through a single API. Respan can auto-instrument all Bedrock calls for tracing, route them through the Respan gateway, or both.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-bedrock boto3 python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-bedrock boto3 python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```bash
+pip install openai python-dotenv
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-bedrock boto3 openai python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-bedrock boto3 openai python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+<Tabs>
+<Tab title="Tracing">
+```bash
+export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"
+export AWS_REGION="us-east-1"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+</Tab>
+<Tab title="Gateway">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No AWS credentials needed — the Respan gateway handles provider authentication.
+
+</Tab>
+<Tab title="Both">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No AWS credentials needed — the Respan gateway handles provider authentication.
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import boto3
+from respan import Respan
+from openinference.instrumentation.bedrock import BedrockInstrumentor
+
+# Initialize Respan with Bedrock instrumentation
+respan = Respan(instrumentations=[BedrockInstrumentor()])
+
+# Calls go directly to AWS Bedrock, auto-traced by Respan
+client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+response = client.invoke_model(
+    modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": "Say hello in three languages."}],
+    }),
+    contentType="application/json",
+)
+result = json.loads(response["body"].read())
+print(result["content"][0]["text"])
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import boto3
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Calls go directly to AWS Bedrock, auto-traced by Respan
+client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+response = client.invoke_model(
+    modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": "Say hello in three languages."}],
+    }),
+    contentType="application/json",
+)
+result = json.loads(response["body"].read())
+print(result["content"][0]["text"])
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+
+# Route all LLM calls through the Respan gateway (OpenAI SDK format)
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="bedrock/anthropic.claude-3-sonnet",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+from respan import Respan
+from openinference.instrumentation.bedrock import BedrockInstrumentor
+
+# Initialize Respan with Bedrock instrumentation
+respan = Respan(instrumentations=[BedrockInstrumentor()])
+
+# Route all LLM calls through the Respan gateway
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="bedrock/anthropic.claude-3-sonnet",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Route all LLM calls through the Respan gateway
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="bedrock/anthropic.claude-3-sonnet",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+<Note>
+This step applies to **Tracing** and **Both** setups. The Gateway-only setup does not produce traces.
+</Note>
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `BedrockInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.bedrock import BedrockInstrumentor
+
+respan = Respan(
+    instrumentations=[BedrockInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.bedrock import BedrockInstrumentor
+
+respan = Respan(
+    instrumentations=[BedrockInstrumentor()],
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = client.invoke_model(
+            modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+            body=json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 1024,
+                "messages": [{"role": "user", "content": question}],
+            }),
+            contentType="application/json",
+        )
+        result = json.loads(response["body"].read())
+        print(result["content"][0]["text"])
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+import json
+import boto3
+from respan import Respan, workflow, task
+from openinference.instrumentation.bedrock import BedrockInstrumentor
+
+respan = Respan(instrumentations=[BedrockInstrumentor()])
+client = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    response = client.invoke_model(
+        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+        body=json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 1024,
+            "messages": [{"role": "user", "content": f"Create a brief outline about: {topic}"}],
+        }),
+        contentType="application/json",
+    )
+    return json.loads(response["body"].read())["content"][0]["text"]
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    response = client.invoke_model(
+        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+        body=json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 2048,
+            "messages": [{"role": "user", "content": f"Write content from this outline: {plan}"}],
+        }),
+        contentType="application/json",
+    )
+    print(json.loads(response["body"].read())["content"][0]["text"])
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic invoke
+
+```python
+import json
+
+response = client.invoke_model(
+    modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": "Say hello in three languages."}],
+    }),
+    contentType="application/json",
+)
+result = json.loads(response["body"].read())
+print(result["content"][0]["text"])
+```
+
+## Gateway features
+
+<Note>
+The features below require the **Gateway** or **Both** setup from [Step 3](#initialize-and-run).
+</Note>
+
+### Switch models
+
+Change the `model` parameter to use 250+ models from different providers through the same gateway.
+
+```python
+# Bedrock (Claude)
+response = client.chat.completions.create(model="bedrock/anthropic.claude-3-sonnet", messages=messages)
+
+# OpenAI
+response = client.chat.completions.create(model="gpt-4.1-nano", messages=messages)
+
+# Google
+response = client.chat.completions.create(model="gemini-2.5-flash", messages=messages)
+```
+
+See the [full model list](https://platform.respan.ai/platform/models).
+
+### Respan parameters
+
+Pass additional Respan parameters via `extra_body` for gateway features.
+
+```python
+response = client.chat.completions.create(
+    model="bedrock/anthropic.claude-3-sonnet",
+    messages=[{"role": "user", "content": "Hello"}],
+    extra_body={
+        "customer_identifier": "user_123",
+        "fallback_models": ["gpt-4.1-nano"],
+        "metadata": {"session_id": "abc123"},
+        "thread_identifier": "conversation_456",
+    },
+)
+```
+
+See [Respan parameters](/apis/develop/gateway/chat-completions#respan-parameters) for the full list.

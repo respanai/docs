@@ -1,0 +1,128 @@
+---
+title: "Codex CLI"
+description: "Trace Codex CLI conversations with Respan — full observability into thinking, tool calls, and agent workflows."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Codex CLI?
+
+[Codex CLI](https://github.com/openai/codex) is OpenAI's open-source coding agent that runs in the terminal. It can reason about your codebase, make file edits, execute shell commands, and handle multi-step coding tasks autonomously.
+
+## Setup
+
+<Note>
+**Prerequisite:** Codex CLI must be installed before integrating with Respan.
+```bash
+npm install -g @openai/codex
+```
+</Note>
+
+<Steps>
+<Step title="Install the Respan CLI">
+
+```bash
+npm install -g @respan/cli
+```
+
+</Step>
+
+<Step title="Set your API key">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Integrate">
+
+```bash
+respan integrate codex-cli
+```
+
+This automatically configures Codex CLI's notify hook to send traces to Respan.
+
+</Step>
+
+<Step title="Use Codex CLI normally">
+
+```bash
+codex "Add input validation to the user registration form"
+```
+
+All conversations are now traced automatically — no changes to your workflow.
+
+</Step>
+
+<Step title="View your traces">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Codex CLI conversations with full hierarchy — reasoning, tool calls, and responses.
+
+</Step>
+</Steps>
+
+## Configuration
+
+Customize the integration with flags:
+
+```bash
+respan integrate codex-cli --customer-id "frank" --project-id "proj-123" --span-name "my-app"
+```
+
+| Flag | Env var | Default | Description |
+|------|---------|---------|-------------|
+| `--global` | — | Both | Write user-level global config (`~/.codex/config.toml`). |
+| `--local` | — | Both | Write per-project config (`.codex/respan.json`). |
+| `--customer-id` | `RESPAN_CUSTOMER_ID` | — | Customer/user identifier for traces. |
+| `--project-id` | `RESPAN_PROJECT_ID` | — | Respan project ID. |
+| `--span-name` | — | `codex-cli` | Root span name. |
+| `--workflow-name` | — | `codex-cli` | Workflow name for traces. |
+| `--attrs` | — | — | Custom attributes JSON (e.g. `'{"env":"prod"}'`). |
+| `--base-url` | `RESPAN_BASE_URL` | `https://api.respan.ai/api` | Respan API base URL. |
+| `--dry-run` | — | — | Preview changes without writing files. |
+
+## Captured Data
+
+| Data | Description |
+|------|-------------|
+| **User prompt** | The user's input text |
+| **Assistant response** | Codex CLI's final response |
+| **Thinking blocks** | Reasoning content |
+| **Tool calls** | Tool name, input, and output (file operations, shell commands, etc.) |
+| **Token usage** | Input, output, and cache tokens (when available) |
+| **Timing** | Start time, end time, latency |
+| **Model** | Model name used (e.g. `codex-mini`, `o4-mini`) |
+
+## Span Types
+
+| Span | `log_type` | Description |
+|------|------------|-------------|
+| Root | `agent` | The complete conversation turn |
+| Thinking | `generation` | Reasoning blocks |
+| Tool | `tool` | Tool invocations (file reads, writes, shell commands, etc.) |
+
+## Uninstall
+
+To remove the integration:
+
+```bash
+respan integrate codex-cli --remove
+```

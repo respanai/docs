@@ -1,0 +1,130 @@
+---
+title: "Gemini CLI"
+description: "Trace Gemini CLI conversations with Respan — full observability into thinking, tool calls, and agent workflows."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Gemini CLI?
+
+[Gemini CLI](https://github.com/google-gemini/gemini-cli) is Google's AI coding agent for the terminal, powered by Gemini models. It can analyze codebases, generate and edit files, run commands, and handle complex multi-step coding workflows with built-in thinking capabilities.
+
+## Setup
+
+<Note>
+**Prerequisite:** Gemini CLI must be installed before integrating with Respan.
+```bash
+npm install -g @google/gemini-cli
+```
+</Note>
+
+<Steps>
+<Step title="Install the Respan CLI">
+
+```bash
+npm install -g @respan/cli
+```
+
+</Step>
+
+<Step title="Set your API key">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Integrate">
+
+```bash
+respan integrate gemini-cli
+```
+
+This automatically configures Gemini CLI's hooks to send traces to Respan.
+
+</Step>
+
+<Step title="Use Gemini CLI normally">
+
+```bash
+gemini "Write unit tests for the payment service"
+```
+
+All conversations are now traced automatically — no changes to your workflow.
+
+</Step>
+
+<Step title="View your traces">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Gemini CLI conversations with full hierarchy — thinking, tool calls, and responses.
+
+</Step>
+</Steps>
+
+## Configuration
+
+Customize the integration with flags:
+
+```bash
+respan integrate gemini-cli --customer-id "frank" --project-id "proj-123"
+```
+
+| Flag | Env var | Default | Description |
+|------|---------|---------|-------------|
+| `--global` | — | — | Write user-level config (`~/.gemini/settings.json`). |
+| `--local` | — | Local | Write per-project config (`.gemini/settings.json`). |
+| `--customer-id` | `RESPAN_CUSTOMER_ID` | — | Customer/user identifier for traces. |
+| `--project-id` | `RESPAN_PROJECT_ID` | — | Respan project ID. |
+| `--attrs` | — | — | Custom attributes JSON (e.g. `'{"env":"prod"}'`). |
+| `--base-url` | `RESPAN_BASE_URL` | `https://api.respan.ai/api` | Respan API base URL. |
+| `--dry-run` | — | — | Preview changes without writing files. |
+
+<Note>
+Gemini CLI uses native OpenTelemetry support. The `respan integrate` command configures the OTLP endpoint and auth headers automatically.
+</Note>
+
+## Captured Data
+
+| Data | Description |
+|------|-------------|
+| **User prompt** | The user's input text |
+| **Assistant response** | Gemini CLI's final response |
+| **Thinking blocks** | Thinking / reasoning content |
+| **Tool calls** | Tool name, input, and output (file operations, shell commands, etc.) |
+| **Token usage** | Input, output, and cache tokens (when available) |
+| **Timing** | Start time, end time, latency |
+| **Model** | Model name used (e.g. `gemini-2.5-pro`, `gemini-2.5-flash`) |
+
+## Span Types
+
+| Span | `log_type` | Description |
+|------|------------|-------------|
+| Root | `agent` | The complete conversation turn |
+| Thinking | `generation` | Thinking / reasoning blocks |
+| Tool | `tool` | Tool invocations (file reads, writes, shell commands, etc.) |
+
+## Uninstall
+
+To remove the integration:
+
+```bash
+respan integrate gemini-cli --remove
+```

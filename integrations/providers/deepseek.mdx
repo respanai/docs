@@ -6,11 +6,11 @@ description: "Use your own DeepSeek credits through Respan"
 <Accordion title="Set up Respan">
 1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
 2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
-3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) Or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
 </Accordion>
 
 <Accordion title="Use AI">
-Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+Add the [Docs MCP](/documentation/getting-started/ask-ai) To your AI coding tool to get help building with Respan. No API key needed.
 ```json
 {
   "mcpServers": {
@@ -46,6 +46,11 @@ Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool
     - [Anthropic SDK](/integrations/gateway/anthropic)
     - [Vercel/Anthropic](/integrations/gateway/vercel#anthropic)
   </Accordion>
+
+## What is DeepSeek?
+
+[DeepSeek](https://www.deepseek.com) is a Chinese AI lab building open-weight models competitive with frontier models at lower cost, including DeepSeek-V3 and DeepSeek-R1 for reasoning.
+
 </AccordionGroup>
 
 ## Add DeepSeek API keys
@@ -65,7 +70,7 @@ Add your DeepSeek API key in the providers page.
 </Steps>
 
 ### Via code
-Add `customer_credentials` parameter in your [request body](/apis/develop/gateway/chat-completions) to use your own DeepSeek credits.
+Add `customer_credentials` parameter in your [request body](/apis/develop/gateway/chat-completions) To use your own DeepSeek credits.
 
 ```json
 {

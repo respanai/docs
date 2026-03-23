@@ -1,0 +1,196 @@
+---
+title: "IBM watsonx"
+description: "Trace IBM watsonx calls with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is IBM watsonx?
+
+[IBM watsonx](https://ibm.github.io/watsonx-ai-python-sdk/) is IBM's enterprise AI platform providing access to foundation models for generation, embedding, and more. Respan can auto-instrument all watsonx calls for tracing and observability.
+
+<Note>
+IBM watsonx uses a proprietary API format, so only **Tracing** setup is available. Gateway routing is not directly supported.
+</Note>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-watsonx ibm-watsonx-ai python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export WATSONX_API_KEY="YOUR_WATSONX_API_KEY"
+export WATSONX_PROJECT_ID="YOUR_WATSONX_PROJECT_ID"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from ibm_watsonx_ai.foundation_models import Model
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors (Traceloop)
+respan = Respan(is_auto_instrument=True)
+
+# Configure watsonx credentials
+credentials = {
+    "url": "https://us-south.ml.cloud.ibm.com",
+    "apikey": os.getenv("WATSONX_API_KEY"),
+}
+
+# Initialize the model
+model = Model(
+    model_id="ibm/granite-13b-instruct-v2",
+    credentials=credentials,
+    project_id=os.getenv("WATSONX_PROJECT_ID"),
+)
+
+# Calls go directly to watsonx, auto-traced by Respan
+response = model.generate_text("Say hello in three languages.")
+print(response)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "watsonx-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from ibm_watsonx_ai.foundation_models import Model
+
+respan = Respan(
+    is_auto_instrument=True,
+    metadata={"service": "watsonx-api", "version": "1.0.0"},
+)
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "enterprise"},
+    ):
+        response = model.generate_text(question)
+        print(response)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from ibm_watsonx_ai.foundation_models import Model
+from respan import Respan, workflow, task
+
+respan = Respan(is_auto_instrument=True)
+
+credentials = {
+    "url": "https://us-south.ml.cloud.ibm.com",
+    "apikey": os.getenv("WATSONX_API_KEY"),
+}
+model = Model(
+    model_id="ibm/granite-13b-instruct-v2",
+    credentials=credentials,
+    project_id=os.getenv("WATSONX_PROJECT_ID"),
+)
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    return model.generate_text(f"Create a brief outline about: {topic}")
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    response = model.generate_text(f"Write content from this outline: {plan}")
+    print(response)
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic generate
+
+```python
+response = model.generate_text("Say hello in three languages.")
+print(response)
+```

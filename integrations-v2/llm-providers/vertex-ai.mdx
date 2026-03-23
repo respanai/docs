@@ -1,0 +1,397 @@
+---
+title: "Vertex AI"
+description: "Trace Vertex AI calls with Respan — auto-instrumented spans, gateway routing, and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Vertex AI?
+
+[Vertex AI](https://cloud.google.com/vertex-ai) is Google Cloud's machine learning platform that provides access to Gemini and other foundation models. Respan can auto-instrument all Vertex AI calls for tracing, route them through the Respan gateway, or both.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-vertexai google-cloud-aiplatform python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-vertexai google-cloud-aiplatform python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```bash
+pip install openai python-dotenv
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install respan-ai openinference-instrumentation-vertexai google-cloud-aiplatform openai python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install respan-ai opentelemetry-instrumentation-vertexai google-cloud-aiplatform openai python-dotenv
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+<Tabs>
+<Tab title="Tracing">
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+# Or authenticate with: gcloud auth application-default login
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+</Tab>
+<Tab title="Gateway">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No Google Cloud credentials needed — the Respan gateway handles provider authentication.
+
+</Tab>
+<Tab title="Both">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No Google Cloud credentials needed — the Respan gateway handles provider authentication.
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="Tracing">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import vertexai
+from vertexai.generative_models import GenerativeModel
+from respan import Respan
+from openinference.instrumentation.vertexai import VertexAIInstrumentor
+
+# Initialize Vertex AI
+vertexai.init(project="your-project-id", location="us-central1")
+
+# Initialize Respan with Vertex AI instrumentation
+respan = Respan(instrumentations=[VertexAIInstrumentor()])
+
+# Calls go directly to Vertex AI, auto-traced by Respan
+model = GenerativeModel("gemini-2.5-flash")
+
+response = model.generate_content("Say hello in three languages.")
+print(response.text)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import vertexai
+from vertexai.generative_models import GenerativeModel
+from respan import Respan
+
+# Initialize Vertex AI
+vertexai.init(project="your-project-id", location="us-central1")
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Calls go directly to Vertex AI, auto-traced by Respan
+model = GenerativeModel("gemini-2.5-flash")
+
+response = model.generate_content("Say hello in three languages.")
+print(response.text)
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab title="Gateway">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+
+# Route all LLM calls through the Respan gateway (OpenAI SDK format)
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="gemini-2.5-flash",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+```
+</Tab>
+<Tab title="Both">
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+from respan import Respan
+from openinference.instrumentation.vertexai import VertexAIInstrumentor
+
+# Initialize Respan with Vertex AI instrumentation
+respan = Respan(instrumentations=[VertexAIInstrumentor()])
+
+# Route all LLM calls through the Respan gateway
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="gemini-2.5-flash",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import OpenAI
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors
+respan = Respan(is_auto_instrument=True)
+
+# Route all LLM calls through the Respan gateway
+client = OpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+
+response = client.chat.completions.create(
+    model="gemini-2.5-flash",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+respan.flush()
+```
+</Tab>
+</Tabs>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+<Note>
+This step applies to **Tracing** and **Both** setups. The Gateway-only setup does not produce traces.
+</Note>
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `VertexAIInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.vertexai import VertexAIInstrumentor
+
+respan = Respan(
+    instrumentations=[VertexAIInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.vertexai import VertexAIInstrumentor
+
+respan = Respan(
+    instrumentations=[VertexAIInstrumentor()],
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = model.generate_content(question)
+        print(response.text)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+import vertexai
+from vertexai.generative_models import GenerativeModel
+from respan import Respan, workflow, task
+from openinference.instrumentation.vertexai import VertexAIInstrumentor
+
+vertexai.init(project="your-project-id", location="us-central1")
+respan = Respan(instrumentations=[VertexAIInstrumentor()])
+model = GenerativeModel("gemini-2.5-flash")
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    response = model.generate_content(f"Create a brief outline about: {topic}")
+    return response.text
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    response = model.generate_content(f"Write content from this outline: {plan}")
+    print(response.text)
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic generate
+
+```python
+model = GenerativeModel("gemini-2.5-flash")
+
+response = model.generate_content("Say hello in three languages.")
+print(response.text)
+```
+
+## Gateway features
+
+<Note>
+The features below require the **Gateway** or **Both** setup from [Step 3](#initialize-and-run).
+</Note>
+
+### Switch models
+
+Change the `model` parameter to use 250+ models from different providers through the same gateway.
+
+```python
+# Google (Vertex AI / Gemini)
+response = client.chat.completions.create(model="gemini-2.5-flash", messages=messages)
+
+# OpenAI
+response = client.chat.completions.create(model="gpt-4.1-nano", messages=messages)
+
+# Anthropic
+response = client.chat.completions.create(model="claude-sonnet-4-5-20250929", messages=messages)
+```
+
+See the [full model list](https://platform.respan.ai/platform/models).
+
+### Respan parameters
+
+Pass additional Respan parameters via `extra_body` for gateway features.
+
+```python
+response = client.chat.completions.create(
+    model="gemini-2.5-flash",
+    messages=[{"role": "user", "content": "Hello"}],
+    extra_body={
+        "customer_identifier": "user_123",
+        "fallback_models": ["gpt-4.1-nano"],
+        "metadata": {"session_id": "abc123"},
+        "thread_identifier": "conversation_456",
+    },
+)
+```
+
+See [Respan parameters](/apis/develop/gateway/chat-completions#respan-parameters) for the full list.

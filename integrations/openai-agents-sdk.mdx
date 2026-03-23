@@ -1,0 +1,524 @@
+---
+title: "OpenAI Agents SDK"
+description: "Trace OpenAI Agents SDK workflows with Respan — auto-instrumented spans, gateway routing, and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is OpenAI Agents SDK?
+
+The [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) (`openai-agents`) is a lightweight framework for building multi-agent workflows with tools, handoffs, and guardrails. Respan gives you full observability over every agent run, LLM generation, tool call, and handoff.
+
+<Accordion title="Example projects">
+- [Python examples](https://github.com/respanai/respan/tree/main/python-sdks/examples/openai-agents-sdk)
+</Accordion>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="Tracing">
+<CodeGroup>
+```bash Python
+pip install openai-agents respan-ai respan-instrumentation-openai-agents python-dotenv
+```
+
+```bash TypeScript
+npm install @openai/agents @respan/respan @respan/tracing @respan/instrumentation-openai-agents
+```
+</CodeGroup>
+</Tab>
+<Tab title="Gateway">
+<CodeGroup>
+```bash Python
+pip install openai-agents python-dotenv
+```
+
+```bash TypeScript
+npm install @openai/agents openai
+```
+</CodeGroup>
+</Tab>
+<Tab title="Both">
+<CodeGroup>
+```bash Python
+pip install openai-agents respan-ai respan-instrumentation-openai-agents python-dotenv
+```
+
+```bash TypeScript
+npm install @openai/agents openai @respan/respan @respan/tracing @respan/instrumentation-openai-agents
+```
+</CodeGroup>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+<Tabs>
+<Tab title="Tracing">
+```bash
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+</Tab>
+<Tab title="Gateway">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No `OPENAI_API_KEY` needed — the Respan gateway handles provider authentication.
+
+</Tab>
+<Tab title="Both">
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No `OPENAI_API_KEY` needed — the Respan gateway handles provider authentication.
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="Tracing">
+<CodeGroup>
+```python Python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner, trace
+
+respan = Respan(instrumentations=[OpenAIAgentsInstrumentor()])
+
+agent = Agent(
+    name="Assistant",
+    instructions="You only respond in haikus.",
+)
+
+async def main():
+    with trace("Hello world"):
+        result = await Runner.run(agent, "Tell me about recursion.")
+        print(result.final_output)
+    respan.flush()
+
+asyncio.run(main())
+```
+
+```typescript TypeScript
+import { Agent, run } from "@openai/agents";
+import { Respan } from "@respan/respan";
+import { OpenAIAgentsInstrumentor } from "@respan/instrumentation-openai-agents";
+
+const respan = new Respan({
+  apiKey: process.env.RESPAN_API_KEY,
+  baseURL: process.env.RESPAN_BASE_URL,
+  instrumentations: [new OpenAIAgentsInstrumentor()],
+});
+await respan.initialize();
+
+const agent = new Agent({
+  name: "Assistant",
+  instructions: "You only respond in haikus.",
+});
+
+const result = await run(agent, "Tell me about recursion.");
+console.log(result.finalOutput);
+await respan.flush();
+```
+</CodeGroup>
+</Tab>
+<Tab title="Gateway">
+<CodeGroup>
+```python Python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import AsyncOpenAI
+from agents import Agent, Runner, set_default_openai_client, trace
+
+client = AsyncOpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+set_default_openai_client(client)
+
+agent = Agent(
+    name="Assistant",
+    instructions="You only respond in haikus.",
+)
+
+async def main():
+    with trace("Hello world"):
+        result = await Runner.run(agent, "Tell me about recursion.")
+        print(result.final_output)
+
+asyncio.run(main())
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+import { Agent, run, setDefaultOpenAIClient } from "@openai/agents";
+
+const client = new OpenAI({
+  apiKey: process.env.RESPAN_API_KEY,
+  baseURL: process.env.RESPAN_BASE_URL ?? "https://api.respan.ai/api",
+});
+setDefaultOpenAIClient(client);
+
+const agent = new Agent({
+  name: "Assistant",
+  instructions: "You only respond in haikus.",
+});
+
+const result = await run(agent, "Tell me about recursion.");
+console.log(result.finalOutput);
+```
+</CodeGroup>
+</Tab>
+<Tab title="Both">
+<CodeGroup>
+```python Python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from openai import AsyncOpenAI
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner, set_default_openai_client, trace
+
+respan = Respan(instrumentations=[OpenAIAgentsInstrumentor()])
+
+client = AsyncOpenAI(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL", "https://api.respan.ai/api"),
+)
+set_default_openai_client(client)
+
+agent = Agent(
+    name="Assistant",
+    instructions="You only respond in haikus.",
+)
+
+async def main():
+    with trace("Hello world"):
+        result = await Runner.run(agent, "Tell me about recursion.")
+        print(result.final_output)
+    respan.flush()
+
+asyncio.run(main())
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+import { Agent, run, setDefaultOpenAIClient } from "@openai/agents";
+import { Respan } from "@respan/respan";
+import { OpenAIAgentsInstrumentor } from "@respan/instrumentation-openai-agents";
+
+const respan = new Respan({
+  apiKey: process.env.RESPAN_API_KEY,
+  baseURL: process.env.RESPAN_BASE_URL,
+  instrumentations: [new OpenAIAgentsInstrumentor()],
+});
+await respan.initialize();
+
+const client = new OpenAI({
+  apiKey: process.env.RESPAN_API_KEY,
+  baseURL: process.env.RESPAN_BASE_URL ?? "https://api.respan.ai/api",
+});
+setDefaultOpenAIClient(client);
+
+const agent = new Agent({
+  name: "Assistant",
+  instructions: "You only respond in haikus.",
+});
+
+const result = await run(agent, "Tell me about recursion.");
+console.log(result.finalOutput);
+await respan.flush();
+```
+</CodeGroup>
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your workflow with agent spans, LLM generations, tool calls, and handoffs.
+
+<Note>
+This step applies to **Tracing** and **Both** setups. The Gateway-only setup does not produce traces.
+</Note>
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `OpenAIAgentsInstrumentor()`). |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+<CodeGroup>
+```python Python
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    instrumentations=[OpenAIAgentsInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "agent-api", "version": "1.0.0"},
+)
+```
+
+```typescript TypeScript
+import { Respan } from "@respan/respan";
+import { OpenAIAgentsInstrumentor } from "@respan/instrumentation-openai-agents";
+
+// Note: default attributes are set via propagateAttributes() in TypeScript
+const respan = new Respan({
+  instrumentations: [new OpenAIAgentsInstrumentor()],
+});
+```
+</CodeGroup>
+
+### With propagate_attributes
+
+Override per-request using a context scope.
+
+<CodeGroup>
+```python Python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner, trace
+
+respan = Respan(instrumentations=[OpenAIAgentsInstrumentor()])
+
+agent = Agent(name="Assistant", instructions="You are a helpful assistant.")
+
+async def handle_request(user_id: str, message: str):
+    with trace("User request"):
+        with propagate_attributes(
+            customer_identifier=user_id,
+            thread_identifier="conv_abc_123",
+            metadata={"plan": "pro"},
+        ):
+            result = await Runner.run(agent, message)
+            print(result.final_output)
+```
+
+```typescript TypeScript
+import { Agent, run } from "@openai/agents";
+import { Respan } from "@respan/respan";
+import { OpenAIAgentsInstrumentor } from "@respan/instrumentation-openai-agents";
+
+const respan = new Respan({
+  instrumentations: [new OpenAIAgentsInstrumentor()],
+});
+await respan.initialize();
+
+const agent = new Agent({
+  name: "Assistant",
+  instructions: "You are a helpful assistant.",
+});
+
+async function handleRequest(userId: string, message: string) {
+  await respan.propagateAttributes(
+    {
+      customer_identifier: userId,
+      thread_identifier: "conv_abc_123",
+      metadata: { plan: "pro" },
+    },
+    async () => {
+      const result = await run(agent, message);
+      console.log(result.finalOutput);
+    }
+  );
+}
+```
+</CodeGroup>
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators (optional)
+
+Decorators are not required. All agent runs, LLM calls, tool calls, and handoffs are auto-traced by the instrumentor. Use `@workflow` and `@task` to add structure when you want to group agent runs into named workflows with nested tasks.
+
+```python
+from respan import Respan, workflow, task
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner, function_tool
+
+respan = Respan(instrumentations=[OpenAIAgentsInstrumentor()])
+
+@function_tool
+def search_docs(query: str) -> str:
+    """Search the documentation."""
+    return f"Results for: {query}"
+
+researcher = Agent(
+    name="Researcher",
+    instructions="You research topics using the search tool.",
+    tools=[search_docs],
+)
+
+writer = Agent(
+    name="Writer",
+    instructions="You write concise summaries.",
+)
+
+@task(name="research")
+async def research(topic: str) -> str:
+    result = await Runner.run(researcher, f"Research: {topic}")
+    return result.final_output
+
+@workflow(name="research_and_write")
+async def pipeline(topic: str):
+    findings = await research(topic)
+    result = await Runner.run(writer, f"Summarize: {findings}")
+    print(result.final_output)
+
+import asyncio
+asyncio.run(pipeline("API gateways"))
+respan.flush()
+```
+
+## Examples
+
+### Tool calls
+
+Tool calls are automatically captured as spans with inputs, outputs, and timing.
+
+```python
+from agents import Agent, Runner, function_tool, trace
+
+@function_tool
+def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny, 72F"
+
+agent = Agent(
+    name="Weather Agent",
+    instructions="Help users check the weather.",
+    tools=[get_weather],
+)
+
+async def main():
+    with trace("Weather check"):
+        result = await Runner.run(agent, "What's the weather in San Francisco?")
+        print(result.final_output)
+    respan.flush()
+```
+
+### Handoffs
+
+Agent-to-agent handoffs are traced with full context.
+
+```python
+from agents import Agent, Runner, trace
+
+billing_agent = Agent(
+    name="Billing Agent",
+    instructions="Handle billing questions.",
+)
+
+support_agent = Agent(
+    name="Support Agent",
+    instructions="Route billing questions to the billing agent.",
+    handoffs=[billing_agent],
+)
+
+async def main():
+    with trace("Support handoff"):
+        result = await Runner.run(support_agent, "I have a billing question")
+        print(result.final_output)
+```
+
+### Streaming
+
+Stream agent responses with real-time text deltas.
+
+```python
+from openai.types.responses import ResponseTextDeltaEvent
+from agents import Agent, Runner
+
+agent = Agent(name="Joker", instructions="You tell jokes.")
+
+result = Runner.run_streamed(agent, input="Tell me 3 jokes.")
+async for event in result.stream_events():
+    if event.type == "raw_response_event" and isinstance(
+        event.data, ResponseTextDeltaEvent
+    ):
+        print(event.data.delta, end="", flush=True)
+```
+
+## Gateway features
+
+<Note>
+The features below require the **Gateway** or **Both** setup from [Step 3](#initialize-and-run).
+</Note>
+
+### Switch models
+
+Change the `model` parameter on your agents to use 250+ models from different providers through the same gateway.
+
+```python
+agent = Agent(
+    name="Assistant",
+    model="claude-sonnet-4-5-20250929",  # Use Anthropic via gateway
+    instructions="You are a helpful assistant.",
+)
+```
+
+See the [full model list](https://platform.respan.ai/platform/models).

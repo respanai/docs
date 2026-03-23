@@ -1,0 +1,201 @@
+---
+title: "Portkey"
+description: "Trace Portkey calls with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Portkey?
+
+[Portkey](https://github.com/Portkey-AI/portkey-python-sdk) is an AI gateway and observability platform that provides a unified interface to multiple LLM providers. Respan can instrument all Portkey calls for tracing and observability, giving you end-to-end visibility.
+
+<Note>
+Portkey is itself a gateway, so only **Tracing** setup is available. Respan gateway routing is not directly applicable.
+</Note>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai openinference-instrumentation-portkey portkey-ai python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export PORTKEY_API_KEY="YOUR_PORTKEY_API_KEY"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from portkey_ai import Portkey
+from respan import Respan
+from openinference.instrumentation.portkey import PortkeyInstrumentor
+
+# Initialize Respan with Portkey instrumentation
+respan = Respan(instrumentations=[PortkeyInstrumentor()])
+
+# Initialize the Portkey client
+client = Portkey(api_key=os.getenv("PORTKEY_API_KEY"))
+
+# Calls go through Portkey, auto-traced by Respan
+response = client.chat.completions.create(
+    model="gpt-4.1-nano",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `PortkeyInstrumentor()`). |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.portkey import PortkeyInstrumentor
+
+respan = Respan(
+    instrumentations=[PortkeyInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from portkey_ai import Portkey
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.portkey import PortkeyInstrumentor
+
+respan = Respan(
+    instrumentations=[PortkeyInstrumentor()],
+    metadata={"service": "chat-api", "version": "1.0.0"},
+)
+client = Portkey(api_key=os.getenv("PORTKEY_API_KEY"))
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = client.chat.completions.create(
+            model="gpt-4.1-nano",
+            messages=[{"role": "user", "content": question}],
+        )
+        print(response.choices[0].message.content)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from portkey_ai import Portkey
+from respan import Respan, workflow, task
+from openinference.instrumentation.portkey import PortkeyInstrumentor
+
+respan = Respan(instrumentations=[PortkeyInstrumentor()])
+client = Portkey(api_key=os.getenv("PORTKEY_API_KEY"))
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[
+            {"role": "user", "content": f"Create a brief outline about: {topic}"},
+        ],
+    )
+    return response.choices[0].message.content
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    response = client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[
+            {"role": "user", "content": f"Write content from this outline: {plan}"},
+        ],
+    )
+    print(response.choices[0].message.content)
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic chat
+
+```python
+response = client.chat.completions.create(
+    model="gpt-4.1-nano",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response.choices[0].message.content)
+```

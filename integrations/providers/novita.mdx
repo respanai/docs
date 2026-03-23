@@ -5,11 +5,11 @@ title: "Novita AI"
 <Accordion title="Set up Respan">
 1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
 2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
-3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) Or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
 </Accordion>
 
 <Accordion title="Use AI">
-Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+Add the [Docs MCP](/documentation/getting-started/ask-ai) To your AI coding tool to get help building with Respan. No API key needed.
 ```json
 {
   "mcpServers": {
@@ -45,9 +45,14 @@ Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool
     - [Anthropic SDK](/integrations/gateway/anthropic)
     - [Vercel/Anthropic](/integrations/gateway/vercel#anthropic)
   </Accordion>
+
+## What is Novita AI?
+
+[Novita AI](https://novita.ai) provides affordable API access to open-source models with GPU-optimized inference infrastructure.
+
 </AccordionGroup>
 
-To use Respan LLM proxy, you need to add your own credentials to call models from each provider. Here's how you can add your [Novita AI](https://novita.ai/) credentials on Respan platform.
+To use Respan LLM proxy, you need to add your own credentials to call models from each provider. Here's how you can add your [Novita AI](https://novita.ai/) Credentials on Respan platform.
 
 ## Add Novita AI API keys
 There are 2 ways to add your Novita AI credentials to your requests:
@@ -55,7 +60,7 @@ There are 2 ways to add your Novita AI credentials to your requests:
 
 <Steps>
 <Step title="Go to the Providers page">
-The [Providers page](https://platform.respan.ai/platform/api/providers) allows you to add your own credentials for each provider. Currently, over 20+ providers are supported.
+The [Providers page](https://platform.respan.ai/platform/api/providers) Allows you to add your own credentials for each provider. Currently, over 20+ providers are supported.
 <Frame>
 <img src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/settings/providers.jpg" alt="Providers Page"/>
 </Frame>
@@ -68,7 +73,7 @@ The [Providers page](https://platform.respan.ai/platform/api/providers) allows y
 <Step title="Call Novita AI models">
 You can now call Novita AI models on Respan platform.
 
-Go to [Models page](https://platform.respan.ai/platform/api/models) and select `Novita AI` from the provider dropdown.
+Go to [Models page](https://platform.respan.ai/platform/api/models) And select `Novita AI` from the provider dropdown.
 
 <img width="600"  src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/llm-proxy/models-novita-dark.jpg"  className="hidden dark:block" alt="Respan Credentials Page"/>
 <img width="600"  src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/llm-proxy/models-novita-light.jpg"  className="block dark:hidden" alt="Respan Credentials Page"/>
@@ -78,6 +83,6 @@ Then add the correct Novita AI model ID in the `Model` field.
 "model": "novita/deepseek-ai/DeepSeek-R1"
 ```
 
-Check out [LLM proxy](/documentation/getting-started/llm-inference#ai-gateway) to know more about how to use the models.
+Check out [LLM proxy](/documentation/getting-started/llm-inference#ai-gateway) To know more about how to use the models.
 </Step>
 </Steps>

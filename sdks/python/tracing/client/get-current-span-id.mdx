@@ -14,9 +14,9 @@ Returns the current span ID as a 16-character hex string, or `None` when no span
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, get_client, task
+from respan import Respan, get_client, task
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @task(name="span_demo")
 def span_demo():

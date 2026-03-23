@@ -1,0 +1,215 @@
+---
+title: "LanceDB"
+description: "Trace LanceDB operations with Respan — auto-instrumented spans for vector search and indexing."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is LanceDB?
+
+[LanceDB](https://github.com/lancedb/lancedb) is an open-source, serverless vector database built on the Lance columnar format. It runs embedded (no server needed) and supports disk-based indexing for cost-efficient similarity search. Respan auto-instruments LanceDB operations so every add, search, and table operation is captured as a traced span.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-lancedb lancedb python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+LanceDB runs locally by default, so no additional credentials are needed.
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import lancedb
+from respan import Respan
+
+# Initialize Respan with auto-instrumentation
+respan = Respan(is_auto_instrument=True)
+
+# Connect to a local LanceDB database
+db = lancedb.connect("./lancedb")
+
+# Create a table with vector data
+data = [
+    {"id": "doc_1", "text": "Introduction to machine learning", "vector": [0.1] * 1536},
+    {"id": "doc_2", "text": "Vector databases explained", "vector": [0.2] * 1536},
+    {"id": "doc_3", "text": "Building search engines", "vector": [0.3] * 1536},
+]
+table = db.create_table("respan_demo", data=data, mode="overwrite")
+
+# Search
+results = table.search([0.1] * 1536).limit(3).to_pandas()
+print(results)
+
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your LanceDB spans including table creation, add, and search operations.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover installed instrumentors. Required for Traceloop instrumentors. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "search-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+
+respan = Respan(is_auto_instrument=True)
+
+with propagate_attributes(
+    customer_identifier="user_456",
+    thread_identifier="session_abc",
+    metadata={"plan": "enterprise"},
+):
+    results = table.search([0.1] * 1536).limit(5).to_pandas()
+    print(results)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Create table
+
+```python
+import lancedb
+
+db = lancedb.connect("./lancedb")
+
+data = [
+    {
+        "id": "product_001",
+        "name": "Wireless Headphones",
+        "category": "electronics",
+        "price": 299.99,
+        "vector": [0.12, 0.34, 0.56] + [0.0] * 1533,
+    },
+    {
+        "id": "product_002",
+        "name": "Cotton T-Shirt",
+        "category": "clothing",
+        "price": 49.99,
+        "vector": [0.78, 0.91, 0.23] + [0.0] * 1533,
+    },
+]
+
+table = db.create_table("products", data=data, mode="overwrite")
+```
+
+### Add data
+
+```python
+table.add([
+    {
+        "id": "product_003",
+        "name": "Running Shoes",
+        "category": "footwear",
+        "price": 129.99,
+        "vector": [0.45, 0.67, 0.89] + [0.0] * 1533,
+    },
+])
+```
+
+### Search
+
+```python
+import pandas as pd
+
+# Basic vector search
+results = table.search([0.12, 0.34, 0.56] + [0.0] * 1533).limit(5).to_pandas()
+
+for _, row in results.iterrows():
+    print(f"{row['name']}: category={row['category']}, distance={row['_distance']:.4f}")
+
+# Filtered search
+results = (
+    table.search([0.12, 0.34, 0.56] + [0.0] * 1533)
+    .where("category = 'electronics'")
+    .limit(5)
+    .to_pandas()
+)
+```
+
+### Delete
+
+```python
+# Delete by filter
+table.delete("category = 'electronics'")
+
+# Delete by ID
+table.delete("id = 'product_001'")
+```

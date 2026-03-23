@@ -8,7 +8,7 @@ description: "Trace a tool execution within an agent or workflow."
 The `@tool` decorator creates a span for a tool operation — a discrete callable used by agents (search, calculator, API call, file read). Tool spans inherit the current entity path and appear nested under the nearest agent, workflow, or task.
 
 ```python
-from respan_tracing import tool
+from respan import tool
 ```
 
 ## Parameters
@@ -19,13 +19,14 @@ from respan_tracing import tool
 | `version` | `int \| None` | `None` | Version number for the tool. |
 | `method_name` | `str \| None` | `None` | Required when decorating a class. Specifies which method to use as the entry point. |
 | `processors` | `str \| List[str] \| None` | `None` | Route this span to specific named processors. See [add_processor](/sdks/python/tracing/main/initialize#add_processor). |
+| `export_filter` | `FilterParamDict \| None` | `None` | Filter dict to control which spans are exported. Uses AND logic — all conditions must match. |
 
 ## Function usage
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task, tool
+from respan import Respan, workflow, task, tool
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @tool(name="web_search")
 def web_search(query: str):
@@ -51,9 +52,9 @@ print(research_workflow())
 ## Class usage
 
 ```python
-from respan_tracing import RespanTelemetry, agent, tool
+from respan import Respan, agent, tool
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @agent(name="analysis", method_name="run")
 class Analyzer:

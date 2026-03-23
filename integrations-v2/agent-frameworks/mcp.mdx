@@ -1,0 +1,278 @@
+---
+title: "MCP (Model Context Protocol)"
+description: "Trace MCP workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is MCP?
+
+The [Model Context Protocol](https://github.com/modelcontextprotocol/python-sdk) (MCP) is Anthropic's open protocol for connecting AI models to external tools and data sources. It standardizes how LLM applications interact with context providers through a server/client architecture.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install mcp respan-ai openinference-instrumentation-mcp python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install mcp respan-ai opentelemetry-instrumentation-mcp python-dotenv
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.mcp import MCPInstrumentor
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+
+# Initialize Respan with MCP instrumentation
+respan = Respan(instrumentations=[MCPInstrumentor()])
+
+# Create an MCP server
+server = Server("my-server")
+
+@server.tool()
+async def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny, 72F"
+
+@server.tool()
+async def add_numbers(a: int, b: int) -> str:
+    """Add two numbers together."""
+    return str(a + b)
+
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options(),
+        )
+
+import asyncio
+asyncio.run(main())
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+
+# Auto-discover installed OpenTelemetry instrumentors
+respan = Respan(is_auto_instrument=True)
+
+server = Server("my-server")
+
+@server.tool()
+async def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny, 72F"
+
+@server.tool()
+async def add_numbers(a: int, b: int) -> str:
+    """Add two numbers together."""
+    return str(a + b)
+
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options(),
+        )
+
+import asyncio
+asyncio.run(main())
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your MCP server and client interactions with tool call spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `MCPInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.mcp import MCPInstrumentor
+
+respan = Respan(
+    instrumentations=[MCPInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "mcp-server", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.mcp import MCPInstrumentor
+
+respan = Respan(instrumentations=[MCPInstrumentor()])
+
+@workflow(name="handle_request")
+async def handle_request(user_id: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        # MCP server handles requests with attributes propagated
+        pass
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.mcp import MCPInstrumentor
+
+respan = Respan(instrumentations=[MCPInstrumentor()])
+
+@task(name="call_mcp_tool")
+async def call_tool(client, tool_name: str, args: dict) -> str:
+    result = await client.call_tool(tool_name, args)
+    return str(result)
+
+@workflow(name="mcp_workflow")
+async def pipeline(client):
+    weather = await call_tool(client, "get_weather", {"city": "Paris"})
+    print(weather)
+```
+
+## Examples
+
+### MCP server
+
+```python
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+
+server = Server("my-tools")
+
+@server.tool()
+async def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny, 72F"
+
+@server.tool()
+async def search_docs(query: str) -> str:
+    """Search the documentation."""
+    return f"Results for: {query}"
+
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options(),
+        )
+```
+
+### MCP client
+
+```python
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+server_params = StdioServerParameters(
+    command="python",
+    args=["my_server.py"],
+)
+
+async def main():
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            # List available tools
+            tools = await session.list_tools()
+            print(f"Available tools: {[t.name for t in tools.tools]}")
+
+            # Call a tool
+            result = await session.call_tool("get_weather", {"city": "Paris"})
+            print(result)
+```

@@ -1,0 +1,228 @@
+---
+title: "PydanticAI"
+description: "Trace PydanticAI workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is PydanticAI?
+
+[PydanticAI](https://github.com/pydantic/pydantic-ai) is an agent framework from the Pydantic team that provides type-safe structured outputs, tool use, and dependency injection. It integrates natively with Pydantic for validated responses.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install pydantic-ai respan-ai openinference-instrumentation-pydantic python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.pydantic import PydanticAIInstrumentor
+from pydantic_ai import Agent
+
+# Initialize Respan with PydanticAI instrumentation
+respan = Respan(instrumentations=[PydanticAIInstrumentor()])
+
+agent = Agent(
+    model="openai:gpt-4o",
+    system_prompt="You are a helpful assistant.",
+)
+
+result = agent.run_sync("What is the capital of France?")
+print(result.output)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your agent trace with LLM calls and tool use spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `PydanticAIInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.pydantic import PydanticAIInstrumentor
+
+respan = Respan(
+    instrumentations=[PydanticAIInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "pydantic-agent", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.pydantic import PydanticAIInstrumentor
+from pydantic_ai import Agent
+
+respan = Respan(instrumentations=[PydanticAIInstrumentor()])
+
+agent = Agent(model="openai:gpt-4o", system_prompt="You are a helpful assistant.")
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        result = agent.run_sync(question)
+        print(result.output)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.pydantic import PydanticAIInstrumentor
+from pydantic_ai import Agent
+
+respan = Respan(instrumentations=[PydanticAIInstrumentor()])
+
+agent = Agent("openai:gpt-4o", system_prompt="You are a helpful travel assistant.")
+
+@task(name="fetch_destination_info")
+def fetch_destination_info(destination: str) -> str:
+    result = agent.run_sync(f"Give me a one-sentence summary of {destination}.")
+    return result.output
+
+@workflow(name="travel_planning_workflow")
+def travel_planning(destination: str):
+    info = fetch_destination_info(destination)
+    print(info)
+
+travel_planning("Paris")
+respan.flush()
+```
+
+## Examples
+
+### Basic agent
+
+```python
+from pydantic_ai import Agent
+
+agent = Agent(
+    model="openai:gpt-4o",
+    system_prompt="You are a helpful assistant.",
+)
+
+result = agent.run_sync("Explain quantum computing in one sentence.")
+print(result.output)
+```
+
+### Structured output
+
+```python
+from pydantic import BaseModel
+from pydantic_ai import Agent
+
+class CityInfo(BaseModel):
+    name: str
+    country: str
+    population: int
+    fun_fact: str
+
+agent = Agent(
+    model="openai:gpt-4o",
+    system_prompt="You provide structured city information.",
+    output_type=CityInfo,
+)
+
+result = agent.run_sync("Tell me about Tokyo.")
+city = result.output
+print(f"{city.name}, {city.country} - Pop: {city.population:,}")
+print(f"Fun fact: {city.fun_fact}")
+```
+
+### Tool use
+
+```python
+from pydantic_ai import Agent
+
+agent = Agent(
+    model="openai:gpt-4o",
+    system_prompt=(
+        "You are a calculator assistant. Always use the add tool for arithmetic."
+    ),
+)
+
+@agent.tool_plain
+def add(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+result = agent.run_sync("What is 15 + 27?")
+print(result.output)
+```

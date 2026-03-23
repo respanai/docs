@@ -7,6 +7,10 @@ description: "Auto-instrument supported LLM providers, vector databases, and fra
 
 `respan-tracing` auto-instruments supported libraries to capture LLM calls, vector DB queries, and framework operations as spans — no code changes required. When a supported library is installed, its calls are automatically traced.
 
+<Note>
+This page covers built-in auto-instrumentation via `RespanTelemetry`. For instrumentation plugins that work with the [`Respan`](/sdks/python/respan/overview) entry point (e.g., OpenAI Agents, OpenAI SDK), see [Instruments](/sdks/python/instruments/openai-agents).
+</Note>
+
 ## Configure
 
 ```python
@@ -44,6 +48,21 @@ telemetry = RespanTelemetry(
 telemetry = RespanTelemetry(
     api_key="your-api-key",
     instruments=set(),
+)
+```
+
+### Disable auto-instrumentation (when using plugins)
+
+When using [instrumentation plugins](/sdks/python/instruments/openai-agents) with the `Respan` entry point, set `auto_instrument=False` on `RespanTelemetry` to avoid duplicate spans:
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    auto_instrument=False,
+    instrumentations=[OpenAIAgentsInstrumentor()],
 )
 ```
 

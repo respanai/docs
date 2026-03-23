@@ -1,0 +1,126 @@
+---
+title: "log_batch_results()"
+description: "Log OpenAI Batch API results as individual traced chat completions."
+---
+
+## Overview
+
+`log_batch_results()` takes OpenAI Batch API request/result pairs and logs each as an individual chat completion span in Respan. This gives you the same visibility into batch completions as real-time calls.
+
+```python
+respan.log_batch_results(requests, results)
+```
+
+## Parameters
+
+```python
+respan.log_batch_results(
+    requests: list[dict],
+    results: list[dict],
+    trace_id: str | None = None,
+)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `requests` | `list[dict]` | Original batch request dicts (from input JSONL). Each must have `custom_id` and `body.messages`. |
+| `results` | `list[dict]` | Batch result dicts (from output JSONL). Each must have `custom_id` and `response.body`. |
+| `trace_id` | `str \| None` | Explicit trace ID for linking. Use for async batches where results arrive in a separate process. |
+
+## Trace linking
+
+Results are linked to traces in this priority order:
+
+1. **OTEL context** — when called inside a `@task` or `@workflow`, auto-links to the active trace and nests completions under the current span.
+2. **Explicit `trace_id`** — for async batches where results arrive in a separate process (e.g. 24 hours later). Creates a `batch_results` task span in the original trace.
+3. **Auto-generated** — creates a new standalone trace if neither is available.
+
+## Examples
+
+### Same process (auto-links to active span)
+
+```python
+from respan import Respan, task
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+@task(name="process_batch")
+def process_batch(output_file_id: str, original_requests: list):
+    results = download_batch_results(output_file_id)
+    respan.log_batch_results(original_requests, results)
+```
+
+The completions appear nested under the `process_batch` task span.
+
+### Different process (explicit trace link)
+
+For async batches where results arrive hours later in a separate job:
+
+```python
+# At batch submission time — save the trace ID
+trace_id = get_client().get_current_trace_id()
+save_to_db(batch_id, trace_id)
+
+# Hours later, in a separate process
+saved_trace_id = load_from_db(batch_id)
+respan.log_batch_results(requests, results, trace_id=saved_trace_id)
+```
+
+The completions appear in the original trace as a `batch_results` group.
+
+### Standalone (no trace link)
+
+```python
+# No active span, no explicit trace_id
+# Creates a new standalone trace
+respan.log_batch_results(requests, results)
+```
+
+## Input format
+
+### Request format
+
+Each request dict should match the OpenAI Batch API input format:
+
+```python
+request = {
+    "custom_id": "req-001",
+    "body": {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "Summarize the text."},
+            {"role": "user", "content": "The quick brown fox..."},
+        ],
+    },
+}
+```
+
+### Result format
+
+Each result dict should match the OpenAI Batch API output format:
+
+```python
+result = {
+    "custom_id": "req-001",
+    "response": {
+        "status_code": 200,
+        "body": {
+            "model": "gpt-4o-mini",
+            "choices": [
+                {"message": {"role": "assistant", "content": "A fox jumped..."}}
+            ],
+            "usage": {
+                "prompt_tokens": 25,
+                "completion_tokens": 10,
+            },
+            "created": 1700000000,
+        },
+    },
+}
+```
+
+Requests and results are matched by `custom_id`.

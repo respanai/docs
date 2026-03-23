@@ -1,0 +1,187 @@
+---
+title: "BeeAI"
+description: "Trace BeeAI workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is BeeAI?
+
+[BeeAI](https://github.com/i-am-bee/beeai-framework) is IBM's open-source framework for building AI agents. It provides a modular architecture for creating agents with tool use, memory, and structured workflows.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install beeai-framework respan-ai openinference-instrumentation-beeai python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.beeai import BeeAIInstrumentor
+from beeai import BeeAgent
+from beeai.llms.openai import OpenAIChatLLM
+
+# Initialize Respan with BeeAI instrumentation
+respan = Respan(instrumentations=[BeeAIInstrumentor()])
+
+llm = OpenAIChatLLM(model="gpt-4.1-nano")
+
+agent = BeeAgent(
+    llm=llm,
+    instructions="You are a helpful assistant.",
+)
+
+response = agent.run("What is the capital of France?")
+print(response)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your agent trace with LLM calls and tool spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `BeeAIInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.beeai import BeeAIInstrumentor
+
+respan = Respan(
+    instrumentations=[BeeAIInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "beeai-app", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.beeai import BeeAIInstrumentor
+
+respan = Respan(instrumentations=[BeeAIInstrumentor()])
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = agent.run(question)
+        print(response)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.beeai import BeeAIInstrumentor
+from beeai import BeeAgent
+from beeai.llms.openai import OpenAIChatLLM
+
+respan = Respan(instrumentations=[BeeAIInstrumentor()])
+
+llm = OpenAIChatLLM(model="gpt-4.1-nano")
+
+@task(name="answer_question")
+def answer_question(question: str) -> str:
+    agent = BeeAgent(llm=llm, instructions="You are a helpful assistant.")
+    return str(agent.run(question))
+
+@workflow(name="qa_pipeline")
+def pipeline(question: str):
+    answer = answer_question(question)
+    print(answer)
+
+pipeline("What are the benefits of LLM observability?")
+respan.flush()
+```
+
+## Examples
+
+### Basic agent
+
+```python
+from beeai import BeeAgent
+from beeai.llms.openai import OpenAIChatLLM
+
+llm = OpenAIChatLLM(model="gpt-4.1-nano")
+
+agent = BeeAgent(
+    llm=llm,
+    instructions="You are a helpful assistant that answers concisely.",
+)
+
+response = agent.run("Explain machine learning in one sentence.")
+print(response)
+```

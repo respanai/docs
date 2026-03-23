@@ -8,7 +8,7 @@ description: "Trace a single operation within a workflow as a child span."
 The `@task` decorator creates a child span for a single unit of work — an LLM call, data processing step, validation, or any discrete operation within a workflow.
 
 ```python
-from respan_tracing import task
+from respan import task
 ```
 
 ## Parameters
@@ -19,14 +19,15 @@ from respan_tracing import task
 | `version` | `int \| None` | `None` | Version number for the task. |
 | `method_name` | `str \| None` | `None` | Required when decorating a class. Specifies which method to use as the entry point. |
 | `processors` | `str \| List[str] \| None` | `None` | Route this span to specific named processors. See [add_processor](/sdks/python/tracing/main/initialize#add_processor). |
+| `export_filter` | `FilterParamDict \| None` | `None` | Filter dict to control which spans are exported. Uses AND logic — all conditions must match. |
 
 ## Function usage
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task
+from respan import Respan, workflow, task
 from openai import OpenAI
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 client = OpenAI()
 
 @task(name="generate_text")
@@ -56,9 +57,9 @@ print(content_pipeline("Python"))
 ## Class usage
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task
+from respan import Respan, workflow, task
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="agent_run", method_name="run")
 class Agent:

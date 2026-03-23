@@ -1,0 +1,213 @@
+---
+title: "Pinecone"
+description: "Trace Pinecone operations with Respan — auto-instrumented spans for vector search and indexing."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Pinecone?
+
+[Pinecone](https://github.com/pinecone-io/pinecone-python-client) is a managed vector database built for high-performance similarity search at scale. Respan auto-instruments Pinecone operations so every upsert, query, and delete is captured as a traced span.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-pinecone pinecone python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export PINECONE_API_KEY="YOUR_PINECONE_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from pinecone import Pinecone, ServerlessSpec
+from respan import Respan
+
+# Initialize Respan with auto-instrumentation
+respan = Respan(is_auto_instrument=True)
+
+# Create a Pinecone client
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+
+# Create an index
+pc.create_index(
+    name="respan-demo",
+    dimension=1536,
+    metric="cosine",
+    spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+)
+
+index = pc.Index("respan-demo")
+
+# Upsert vectors
+index.upsert(
+    vectors=[
+        {"id": "vec_1", "values": [0.1] * 1536, "metadata": {"genre": "drama"}},
+        {"id": "vec_2", "values": [0.2] * 1536, "metadata": {"genre": "comedy"}},
+    ]
+)
+
+# Query
+results = index.query(vector=[0.1] * 1536, top_k=3, include_metadata=True)
+print(results)
+
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Pinecone spans including upsert and query operations.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover installed instrumentors. Required for Traceloop instrumentors. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "search-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+
+respan = Respan(is_auto_instrument=True)
+
+with propagate_attributes(
+    customer_identifier="user_456",
+    thread_identifier="session_abc",
+    metadata={"plan": "enterprise"},
+):
+    results = index.query(vector=[0.1] * 1536, top_k=5, include_metadata=True)
+    print(results)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Create index
+
+```python
+from pinecone import Pinecone, ServerlessSpec
+
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+
+pc.create_index(
+    name="product-embeddings",
+    dimension=1536,
+    metric="cosine",
+    spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+)
+```
+
+### Upsert vectors
+
+```python
+index = pc.Index("product-embeddings")
+
+index.upsert(
+    vectors=[
+        {
+            "id": "product_001",
+            "values": [0.12, 0.34, 0.56] + [0.0] * 1533,  # 1536-dim vector
+            "metadata": {"category": "electronics", "price": 299.99},
+        },
+        {
+            "id": "product_002",
+            "values": [0.78, 0.91, 0.23] + [0.0] * 1533,
+            "metadata": {"category": "clothing", "price": 49.99},
+        },
+    ]
+)
+```
+
+### Query
+
+```python
+results = index.query(
+    vector=[0.12, 0.34, 0.56] + [0.0] * 1533,
+    top_k=5,
+    include_metadata=True,
+    filter={"category": {"$eq": "electronics"}},
+)
+
+for match in results["matches"]:
+    print(f"{match['id']}: score={match['score']:.4f}, metadata={match['metadata']}")
+```
+
+### Delete
+
+```python
+# Delete by IDs
+index.delete(ids=["product_001", "product_002"])
+
+# Delete by filter
+index.delete(filter={"category": {"$eq": "electronics"}})
+```

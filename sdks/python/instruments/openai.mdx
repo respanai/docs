@@ -1,0 +1,209 @@
+---
+title: "OpenAI SDK"
+description: "Respan instrumentation plugin for direct OpenAI SDK usage."
+---
+
+## Overview
+
+`respan-instrumentation-openai` is an instrumentation plugin that auto-traces all OpenAI SDK calls (`ChatCompletion`, `Completion`, `Embedding`) using the `opentelemetry-instrumentation-openai` library. It also applies a sync prompt-capture patch to ensure input messages are reliably captured.
+
+```bash
+pip install respan-instrumentation-openai
+```
+
+**Version:** 1.0.0 | **Python:** `>=3.11, <3.14`
+
+### Dependencies
+
+| Package | Version |
+|---------|---------|
+| `respan-tracing` | >=2.3.0 |
+| `openai` | >=1.0.0 |
+| `opentelemetry-instrumentation-openai` | >=0.48.0 |
+
+## Quick start
+
+```python
+from respan import Respan
+from respan_instrumentation_openai import OpenAIInstrumentor
+from openai import OpenAI
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIInstrumentor()],
+)
+
+client = OpenAI()
+
+# All OpenAI calls are automatically traced
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+print(response.choices[0].message.content)
+```
+
+## Public API
+
+### OpenAIInstrumentor
+
+The main instrumentor class. Implements the `Instrumentation` protocol.
+
+```python
+from respan_instrumentation_openai import OpenAIInstrumentor
+```
+
+| Attribute/Method | Type | Description |
+|------------------|------|-------------|
+| `name` | `str` | `"openai"` — unique plugin identifier. |
+| `activate()` | `() -> None` | Instruments the OpenAI SDK via OTEL and applies the sync prompt-capture patch. |
+| `deactivate()` | `() -> None` | Uninstruments the OpenAI SDK. |
+
+#### activate()
+
+When called, `activate()`:
+1. Imports `opentelemetry.instrumentation.openai.OpenAIInstrumentor` (the OTEL community instrumentor).
+2. Calls `instrumentor.instrument()` if not already instrumented.
+3. Applies a sync prompt-capture patch (see below).
+4. Sets `self._instrumented = True`.
+
+Calling `activate()` multiple times is safe (idempotent).
+
+#### deactivate()
+
+Calls `OpenAIInstrumentor.uninstrument()` on the OTEL instrumentor and resets the internal state.
+
+## What gets captured
+
+The OTEL OpenAI instrumentor automatically creates spans for:
+
+| Operation | Span Name Pattern | Attributes |
+|-----------|-------------------|------------|
+| `chat.completions.create()` | `openai.chat` | `gen_ai.system`, `gen_ai.request.model`, prompt/completion tokens, input messages, output |
+| `completions.create()` | `openai.completion` | Same as above |
+| `embeddings.create()` | `openai.embeddings` | `gen_ai.system`, `gen_ai.request.model`, token counts |
+
+### Span attributes
+
+All spans carry standard GenAI semantic conventions:
+
+| Attribute | Description |
+|-----------|-------------|
+| `gen_ai.system` | `"openai"` |
+| `gen_ai.request.model` | Model name (e.g. `"gpt-4o-mini"`) |
+| `gen_ai.usage.prompt_tokens` | Input token count |
+| `gen_ai.usage.completion_tokens` | Output token count |
+| `gen_ai.prompt.0.role` | Role of the i-th input message |
+| `gen_ai.prompt.0.content` | Content of the i-th input message |
+| `gen_ai.completion.0.role` | Role of the i-th output message |
+| `gen_ai.completion.0.content` | Content of the i-th output message |
+
+<Note>
+The `EnrichedSpan` proxy in the exporter automatically injects `llm.request.type="chat"` for GenAI spans that carry `gen_ai.system` but lack `llm.request.type`. This ensures the Respan backend correctly parses prompt/completion data.
+</Note>
+
+## Sync prompt-capture patch
+
+### Problem
+
+`opentelemetry-instrumentation-openai` v0.52+ has an `async def _handle_request()` for the chat wrapper. In synchronous contexts, this runs through `asyncio.run()` or spawns a thread, which can silently lose prompt attributes when:
+- `_set_request_attributes` raises on `response_format` handling, killing the entire `_handle_request` before `_set_prompts` runs.
+- `asyncio.run()` / thread path has environment-specific issues (Lambda, Docker, etc.).
+
+### Fix
+
+The plugin replaces the async `_handle_request` with a synchronous version that has **fault isolation** between sections:
+1. **Request attributes** (model, temperature, etc.) — errors are caught and logged, don't block prompts.
+2. **Prompt capture** — runs synchronously with inline content (no base64 upload).
+3. **Trace propagation** — reasoning effort and context propagation.
+
+This ensures prompts always appear on the dashboard, even if other attribute sections fail.
+
+## Combined with decorators
+
+```python
+from respan import Respan, workflow, task
+from respan_instrumentation_openai import OpenAIInstrumentor
+from openai import OpenAI
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIInstrumentor()],
+)
+client = OpenAI()
+
+@task(name="generate_summary")
+def generate_summary(text: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "Summarize the following text."},
+            {"role": "user", "content": text},
+        ],
+    )
+    return response.choices[0].message.content
+
+@workflow(name="summarization_pipeline")
+def summarize_documents(docs: list[str]) -> list[str]:
+    return [generate_summary(doc) for doc in docs]
+```
+
+## With propagated attributes
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai import OpenAIInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIInstrumentor()],
+)
+
+def handle_request(user_id: str, message: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        metadata={"source": "api"},
+    ):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": message}],
+        )
+        return response.choices[0].message.content
+```
+
+## vs auto-instrumentation
+
+`respan-tracing` includes built-in auto-instrumentation for OpenAI (via the `Instruments.OPENAI` enum). The difference:
+
+| Feature | Auto-instrumentation | This plugin |
+|---------|---------------------|-------------|
+| Setup | Automatic with `RespanTelemetry()` | Explicit with `Respan(instrumentations=[...])` |
+| Prompt capture | May fail in sync contexts | Patched for reliability |
+| Control | Enabled/disabled via `instruments`/`block_instruments` | Activate/deactivate per-instance |
+| Recommended for | Simple setups | Production applications needing reliable prompt capture |
+
+## Architecture
+
+```
+openai.ChatCompletion.create()
+  │
+  ▼
+opentelemetry-instrumentation-openai (OTEL community lib)
+  │  + sync prompt-capture patch (from this plugin)
+  │
+  ▼
+Creates standard OTEL Span with gen_ai.* attributes
+  │
+  ▼
+RespanSpanProcessor.on_end()
+  │  filters via is_processable_span()
+  │  enriches: entity_path, propagated attrs
+  │
+  ▼
+RespanSpanExporter.export()
+  │  EnrichedSpan: injects llm.request.type="chat"
+  │  Converts to OTLP JSON
+  │
+  ▼
+POST /v2/traces → Respan backend
+```

@@ -1,0 +1,202 @@
+---
+title: "OpenAI Agents SDK"
+description: "Respan instrumentation plugin for the OpenAI Agents SDK."
+---
+
+## Overview
+
+`respan-instrumentation-openai-agents` is an instrumentation plugin that captures traces from the [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) and sends them to Respan via the unified OTEL pipeline.
+
+It registers a `TracingProcessor` with the OpenAI Agents SDK that converts native SDK trace/span events into OTEL `ReadableSpan` objects with proper `traceloop.*` and `gen_ai.*` attributes.
+
+```bash
+pip install respan-instrumentation-openai-agents
+```
+
+**Version:** 1.0.0 | **Python:** `>=3.11, <3.14`
+
+### Dependencies
+
+| Package | Version |
+|---------|---------|
+| `respan-tracing` | >=2.3.0 |
+| `respan-sdk` | >=2.5.0 |
+| `openai-agents` | >=0.3.1 |
+
+## Quick start
+
+```python
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+# Now all OpenAI Agents SDK traces are automatically captured
+from agents import Agent, Runner
+
+agent = Agent(name="my-agent", instructions="You are a helpful assistant.")
+result = await Runner.run(agent, "Hello!")
+print(result.final_output)
+```
+
+## Public API
+
+### OpenAIAgentsInstrumentor
+
+The main instrumentor class. Implements the `Instrumentation` protocol.
+
+```python
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+```
+
+| Attribute/Method | Type | Description |
+|------------------|------|-------------|
+| `name` | `str` | `"openai-agents"` — unique plugin identifier. |
+| `activate()` | `() -> None` | Registers a `TracingProcessor` with the OpenAI Agents SDK via `set_trace_processors()`. |
+| `deactivate()` | `() -> None` | Clears the processor reference. |
+
+#### activate()
+
+When called, `activate()`:
+1. Creates an internal `_RespanTracingProcessor` instance.
+2. Calls `agents.tracing.set_trace_processors([processor])` to replace the default OpenAI tracing backend.
+3. All subsequent traces and spans from the OpenAI Agents SDK are routed through Respan instead of OpenAI's tracing endpoint.
+
+<Warning>
+`set_trace_processors()` replaces **all** existing processors. If you need OpenAI's native tracing alongside Respan, you will need a custom setup.
+</Warning>
+
+#### deactivate()
+
+Clears the internal processor reference. Does not restore the original OpenAI processors.
+
+## Captured span types
+
+The plugin captures all span types from the OpenAI Agents SDK:
+
+| SDK Span Type | OTEL Span Kind | Log Type | Description |
+|---------------|---------------|----------|-------------|
+| `Trace` | `workflow` | `workflow` | Root trace span (the overall agent run). |
+| `AgentSpanData` | `agent` | `agent` | Agent execution span. Includes agent name, tools, and handoffs. |
+| `ResponseSpanData` | `task` | `response` | LLM response (Responses API call). Includes model, tokens, input/output. |
+| `GenerationSpanData` | `task` | `generation` | LLM generation (Chat Completions API call). Includes model, tokens, input/output. |
+| `FunctionSpanData` | `tool` | `tool` | Tool/function call execution. Includes function name, input, output. |
+| `HandoffSpanData` | `task` | `handoff` | Agent-to-agent handoff. Includes from/to agent names. |
+| `GuardrailSpanData` | `task` | `guardrail` | Guardrail check execution. Includes guardrail name and triggered status. |
+| `CustomSpanData` | `task` | `custom` | Custom user-defined span data. |
+
+### Span attributes
+
+All spans include these common attributes:
+
+| Attribute | Description |
+|-----------|-------------|
+| `traceloop.span.kind` | Span kind: `"workflow"`, `"agent"`, `"task"`, `"tool"`. |
+| `traceloop.entity.name` | Human-readable span name. |
+| `traceloop.entity.path` | Entity path for parent/child relationship tracking. |
+| `respan.entity.log_type` | Respan log type classification (from `respan-sdk` constants). |
+
+LLM spans (`ResponseSpanData`, `GenerationSpanData`) additionally include:
+
+| Attribute | Description |
+|-----------|-------------|
+| `llm.request.type` | Always `"chat"` — triggers backend prompt/completion parsing. |
+| `gen_ai.system` | `"openai"` (for ResponseSpanData). |
+| `gen_ai.request.model` | Model name (e.g. `"gpt-4o"`). |
+| `gen_ai.usage.prompt_tokens` | Input token count. |
+| `gen_ai.usage.completion_tokens` | Output token count. |
+| `traceloop.entity.input` | JSON-serialized input messages. |
+| `traceloop.entity.output` | JSON-serialized output. |
+
+## With propagated attributes
+
+Use `propagate_attributes()` to attach per-request metadata to all spans:
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+agent = Agent(name="assistant", instructions="You are helpful.")
+
+async def handle_user_request(user_id: str, message: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_123",
+        metadata={"source": "web"},
+    ):
+        result = await Runner.run(agent, message)
+        return result.final_output
+```
+
+## With decorators
+
+Combine plugin instrumentation with decorators for additional context:
+
+```python
+from respan import Respan, workflow, task
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+agent = Agent(name="researcher", instructions="Research the given topic.")
+
+@task(name="research")
+async def research(topic: str):
+    result = await Runner.run(agent, f"Research: {topic}")
+    return result.final_output
+
+@workflow(name="research_pipeline")
+async def pipeline(topics: list[str]):
+    results = []
+    for topic in topics:
+        results.append(await research(topic))
+    return results
+```
+
+## Architecture
+
+```
+OpenAI Agents SDK
+  │
+  ├─ Trace (on_trace_end)  ──→  emit_trace()     ──→  build_readable_span() ──→  inject_span()
+  │                                                                                    │
+  ├─ AgentSpan (on_span_end) ──→ emit_agent()     ──→  build_readable_span() ──→  inject_span()
+  │                                                                                    │
+  ├─ ResponseSpan            ──→ emit_response()   ──→  build_readable_span() ──→  inject_span()
+  │                                                                                    │
+  ├─ FunctionSpan            ──→ emit_function()   ──→  build_readable_span() ──→  inject_span()
+  │                                                                                    │
+  └─ ...                     ──→ ...               ──→  ...                   ──→  ...
+                                                                                       │
+                                                                                       ▼
+                                                                            OTEL Processor Chain
+                                                                                       │
+                                                                                       ▼
+                                                                            RespanSpanExporter
+                                                                                       │
+                                                                                       ▼
+                                                                              POST /v2/traces
+```
+
+## Internal modules
+
+These are implementation details, not part of the public API:
+
+| Module | Description |
+|--------|-------------|
+| `_instrumentation.py` | `OpenAIAgentsInstrumentor` class and `_RespanTracingProcessor` (the `TracingProcessor` implementation). |
+| `_otel_emitter.py` | Per-type emitter functions (`emit_trace`, `emit_agent`, `emit_response`, etc.) and the `emit_sdk_item()` dispatcher. |
+| `_utils.py` | Serialization helpers: `_serialize()`, `_format_input_messages()`, `_format_output()`, `_parse_ts()`, `_responses_api_item_to_message()`. |

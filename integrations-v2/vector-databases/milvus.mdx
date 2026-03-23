@@ -1,0 +1,227 @@
+---
+title: "Milvus"
+description: "Trace Milvus operations with Respan — auto-instrumented spans for vector search and indexing."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Milvus?
+
+[Milvus](https://github.com/milvus-io/pymilvus) is an open-source vector database built for scalable similarity search and AI applications. Respan auto-instruments Milvus operations so every insert, search, and collection operation is captured as a traced span.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-milvus pymilvus python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export MILVUS_URI="YOUR_MILVUS_URI"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from pymilvus import MilvusClient
+from respan import Respan
+
+# Initialize Respan with auto-instrumentation
+respan = Respan(is_auto_instrument=True)
+
+# Create a Milvus client
+client = MilvusClient(uri=os.getenv("MILVUS_URI", "http://localhost:19530"))
+
+# Create a collection
+client.create_collection(
+    collection_name="respan_demo",
+    dimension=1536,
+)
+
+# Insert vectors
+client.insert(
+    collection_name="respan_demo",
+    data=[
+        {"id": 1, "vector": [0.1] * 1536, "genre": "drama"},
+        {"id": 2, "vector": [0.2] * 1536, "genre": "comedy"},
+    ],
+)
+
+# Search
+results = client.search(
+    collection_name="respan_demo",
+    data=[[0.1] * 1536],
+    limit=3,
+    output_fields=["genre"],
+)
+print(results)
+
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Milvus spans including collection creation, insert, and search operations.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover installed instrumentors. Required for Traceloop instrumentors. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "search-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+
+respan = Respan(is_auto_instrument=True)
+
+with propagate_attributes(
+    customer_identifier="user_456",
+    thread_identifier="session_abc",
+    metadata={"plan": "enterprise"},
+):
+    results = client.search(
+        collection_name="respan_demo",
+        data=[[0.1] * 1536],
+        limit=5,
+        output_fields=["genre"],
+    )
+    print(results)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Create collection
+
+```python
+from pymilvus import MilvusClient
+
+client = MilvusClient(uri="http://localhost:19530")
+
+client.create_collection(
+    collection_name="product_embeddings",
+    dimension=1536,
+)
+```
+
+### Insert vectors
+
+```python
+client.insert(
+    collection_name="product_embeddings",
+    data=[
+        {
+            "id": 1,
+            "vector": [0.12, 0.34, 0.56] + [0.0] * 1533,
+            "category": "electronics",
+            "price": 299.99,
+        },
+        {
+            "id": 2,
+            "vector": [0.78, 0.91, 0.23] + [0.0] * 1533,
+            "category": "clothing",
+            "price": 49.99,
+        },
+    ],
+)
+```
+
+### Search
+
+```python
+results = client.search(
+    collection_name="product_embeddings",
+    data=[[0.12, 0.34, 0.56] + [0.0] * 1533],
+    limit=5,
+    output_fields=["category", "price"],
+    filter='category == "electronics"',
+)
+
+for hits in results:
+    for hit in hits:
+        print(f"id={hit['id']}, distance={hit['distance']:.4f}, entity={hit['entity']}")
+```
+
+### Delete
+
+```python
+# Delete by IDs
+client.delete(
+    collection_name="product_embeddings",
+    ids=[1, 2],
+)
+
+# Delete by filter
+client.delete(
+    collection_name="product_embeddings",
+    filter='category == "electronics"',
+)
+```

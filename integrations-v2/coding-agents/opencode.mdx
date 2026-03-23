@@ -1,0 +1,137 @@
+---
+title: "OpenCode"
+description: "Trace OpenCode conversations with Respan — full observability into thinking, tool calls, and agent workflows."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is OpenCode?
+
+[OpenCode](https://github.com/opencode-ai/opencode) is an open-source terminal-based AI coding assistant. It supports multiple LLM providers, can edit files, run commands, and handle multi-step coding tasks directly from your terminal.
+
+## Setup
+
+<Note>
+**Prerequisite:** OpenCode must be installed before integrating with Respan.
+
+<CodeGroup>
+```bash Go
+go install github.com/opencode-ai/opencode@latest
+```
+
+```bash Homebrew
+brew install opencode
+```
+</CodeGroup>
+</Note>
+
+<Steps>
+<Step title="Install the Respan CLI">
+
+```bash
+npm install -g @respan/cli
+```
+
+</Step>
+
+<Step title="Set your API key">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Integrate">
+
+```bash
+respan integrate opencode
+```
+
+This automatically configures OpenCode's hooks to send traces to Respan.
+
+</Step>
+
+<Step title="Use OpenCode normally">
+
+```bash
+opencode "Optimize the database queries in the user service"
+```
+
+All conversations are now traced automatically — no changes to your workflow.
+
+</Step>
+
+<Step title="View your traces">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your OpenCode conversations with full hierarchy — thinking, tool calls, and responses.
+
+</Step>
+</Steps>
+
+## Configuration
+
+Customize the integration with flags:
+
+```bash
+respan integrate opencode --customer-id "frank" --project-id "proj-123"
+```
+
+| Flag | Env var | Default | Description |
+|------|---------|---------|-------------|
+| `--global` | — | — | Write user-level config (`~/.config/opencode/plugins/otel.json`). |
+| `--local` | — | Local | Write per-project config (`.opencode/plugins/otel.json`). |
+| `--customer-id` | `RESPAN_CUSTOMER_ID` | — | Customer/user identifier for traces. |
+| `--project-id` | `RESPAN_PROJECT_ID` | — | Respan project ID. |
+| `--attrs` | — | — | Custom attributes JSON (e.g. `'{"env":"prod"}'`). |
+| `--base-url` | `RESPAN_BASE_URL` | `https://api.respan.ai/api` | Respan API base URL. |
+| `--dry-run` | — | — | Preview changes without writing files. |
+
+<Note>
+OpenCode uses the `opencode-otel` community plugin. The `respan integrate` command installs the plugin and configures OTLP endpoints automatically.
+</Note>
+
+## Captured Data
+
+| Data | Description |
+|------|-------------|
+| **User prompt** | The user's input text |
+| **Assistant response** | OpenCode's final response |
+| **Thinking blocks** | Thinking / reasoning content |
+| **Tool calls** | Tool name, input, and output (file operations, shell commands, etc.) |
+| **Token usage** | Input, output, and cache tokens (when available) |
+| **Timing** | Start time, end time, latency |
+| **Model** | Model name used (varies by configured provider) |
+
+## Span Types
+
+| Span | `log_type` | Description |
+|------|------------|-------------|
+| Root | `agent` | The complete conversation turn |
+| Thinking | `generation` | Thinking / reasoning blocks |
+| Tool | `tool` | Tool invocations (file reads, writes, shell commands, etc.) |
+
+## Uninstall
+
+To remove the integration:
+
+```bash
+respan integrate opencode --remove
+```

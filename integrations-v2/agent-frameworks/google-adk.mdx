@@ -1,0 +1,211 @@
+---
+title: "Google ADK"
+description: "Trace Google ADK workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Google ADK?
+
+[Google ADK](https://github.com/google/adk-python) (Agent Development Kit) is Google's framework for building AI agents. It provides tools for creating agents that can interact with Google's Gemini models and external tools.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install google-adk respan-ai openinference-instrumentation-google-adk python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+from google.adk import Agent, Runner
+
+# Initialize Respan with Google ADK instrumentation
+respan = Respan(instrumentations=[GoogleADKInstrumentor()])
+
+agent = Agent(
+    name="Assistant",
+    model="gemini-2.0-flash",
+    instruction="You are a helpful assistant.",
+)
+
+runner = Runner(agent=agent, app_name="my-app")
+result = runner.run(user_id="user_1", query="What is the capital of France?")
+print(result)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your agent trace with LLM spans and tool calls.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `GoogleADKInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+
+respan = Respan(
+    instrumentations=[GoogleADKInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "adk-agent", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+
+respan = Respan(instrumentations=[GoogleADKInstrumentor()])
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, query: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        result = runner.run(user_id=user_id, query=query)
+        print(result)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.google_adk import GoogleADKInstrumentor
+from google.adk import Agent, Runner
+
+respan = Respan(instrumentations=[GoogleADKInstrumentor()])
+
+agent = Agent(
+    name="Researcher",
+    model="gemini-2.0-flash",
+    instruction="You research topics thoroughly.",
+)
+
+runner = Runner(agent=agent, app_name="research-app")
+
+@task(name="research_topic")
+def research(topic: str) -> str:
+    result = runner.run(user_id="user_1", query=f"Research: {topic}")
+    return str(result)
+
+@workflow(name="research_pipeline")
+def pipeline(topic: str):
+    findings = research(topic)
+    print(findings)
+
+pipeline("quantum computing applications")
+respan.flush()
+```
+
+## Examples
+
+### Basic agent
+
+```python
+from google.adk import Agent, Runner
+
+agent = Agent(
+    name="Assistant",
+    model="gemini-2.0-flash",
+    instruction="You are a helpful assistant.",
+)
+
+runner = Runner(agent=agent, app_name="hello-world")
+result = runner.run(user_id="user_1", query="Explain machine learning in one sentence.")
+print(result)
+```
+
+### Tool use
+
+```python
+from google.adk import Agent, Runner
+
+def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny, 72F"
+
+agent = Agent(
+    name="Weather Agent",
+    model="gemini-2.0-flash",
+    instruction="Help users check the weather using the provided tool.",
+    tools=[get_weather],
+)
+
+runner = Runner(agent=agent, app_name="weather-app")
+result = runner.run(user_id="user_1", query="What's the weather in San Francisco?")
+print(result)
+```

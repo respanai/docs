@@ -8,7 +8,7 @@ description: "Context manager to attach Respan-specific attributes to spans."
 `respan_span_attributes()` is a context manager that attaches Respan-specific attributes to all spans created within its scope. Use it to set `customer_identifier`, `trace_group_identifier`, and `metadata` without manually calling `update_current_span()` on each span.
 
 ```python
-from respan_tracing import respan_span_attributes
+from respan import respan_span_attributes
 ```
 
 ## Supported attributes
@@ -22,9 +22,9 @@ from respan_tracing import respan_span_attributes
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, task, respan_span_attributes
+from respan import Respan, workflow, task, respan_span_attributes
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @task(name="process_data")
 def process_data():

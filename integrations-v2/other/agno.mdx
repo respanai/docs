@@ -1,0 +1,238 @@
+---
+title: "Agno"
+description: "Trace Agno operations with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Agno?
+
+[Agno](https://github.com/agno-agi/agno) is a lightweight Python framework for building AI agents with built-in support for memory, tools, and structured outputs. It provides a clean API for creating agents that can reason, use tools, and maintain conversation context. The Respan integration uses the OpenInference instrumentor to capture all agent runs, LLM calls, and tool invocations as traced spans.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai openinference-instrumentation-agno agno python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.agno import AgnoInstrumentor
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+# Initialize Respan with Agno instrumentation
+respan = Respan(instrumentations=[AgnoInstrumentor()])
+
+# Create and run an agent
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o-mini"),
+    instructions="You are a helpful assistant. Be concise.",
+)
+
+agent.print_response("What are the benefits of observability in AI systems?")
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your agent runs, LLM generations, and tool calls as traced spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `AgnoInstrumentor()`). |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.agno import AgnoInstrumentor
+
+respan = Respan(
+    instrumentations=[AgnoInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "agent-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+from openinference.instrumentation.agno import AgnoInstrumentor
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+respan = Respan(instrumentations=[AgnoInstrumentor()])
+
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o-mini"),
+    instructions="You are a helpful assistant.",
+)
+
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        agent.print_response(question)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Agent with tools
+
+Create an agent that uses custom tools. Tool calls and their results are automatically traced.
+
+```python
+import json
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+from agno.tools import tool
+
+
+@tool
+def get_weather(city: str) -> str:
+    """Get the current weather for a city."""
+    weather_data = {
+        "San Francisco": "Foggy, 58F",
+        "New York": "Sunny, 75F",
+        "London": "Rainy, 52F",
+    }
+    return weather_data.get(city, f"Weather data not available for {city}")
+
+
+@tool
+def get_time(timezone: str) -> str:
+    """Get the current time in a timezone."""
+    return f"The current time in {timezone} is 2:30 PM"
+
+
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o-mini"),
+    instructions="You help users with weather and time information.",
+    tools=[get_weather, get_time],
+)
+
+agent.print_response("What's the weather in San Francisco and the time in PST?")
+respan.flush()
+```
+
+### Structured output agent
+
+Use Agno with Pydantic models to get structured responses from the agent.
+
+```python
+from pydantic import BaseModel, Field
+from typing import List
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+
+class TravelPlan(BaseModel):
+    destination: str = Field(description="Travel destination")
+    duration_days: int = Field(description="Trip duration in days")
+    activities: List[str] = Field(description="Recommended activities")
+    estimated_budget: str = Field(description="Estimated budget range")
+
+
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o-mini"),
+    instructions="You are a travel planning assistant. Create detailed travel plans.",
+    response_model=TravelPlan,
+)
+
+response = agent.run("Plan a 5-day trip to Tokyo for a first-time visitor.")
+plan = response.content
+print(f"Destination: {plan.destination}")
+print(f"Duration: {plan.duration_days} days")
+print(f"Budget: {plan.estimated_budget}")
+for activity in plan.activities:
+    print(f"  - {activity}")
+respan.flush()
+```
+
+### Agent with memory
+
+Create an agent that maintains conversation history across multiple turns.
+
+```python
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+agent = Agent(
+    model=OpenAIChat(id="gpt-4o-mini"),
+    instructions="You are a helpful tutor. Build on previous answers.",
+    add_history_to_messages=True,
+    num_history_responses=5,
+)
+
+# Multi-turn conversation — each turn is traced
+agent.print_response("What is machine learning?")
+agent.print_response("Can you give me a simple example?")
+agent.print_response("How does that relate to deep learning?")
+respan.flush()
+```

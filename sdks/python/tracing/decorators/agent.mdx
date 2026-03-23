@@ -8,7 +8,7 @@ description: "Mark a function or class as a traced agent span."
 The `@agent` decorator creates a span representing an autonomous agent. Agent spans set the workflow name context, so all nested tasks and tools appear grouped under this agent in the trace tree.
 
 ```python
-from respan_tracing import agent
+from respan import agent
 ```
 
 ## Parameters
@@ -19,14 +19,15 @@ from respan_tracing import agent
 | `version` | `int \| None` | `None` | Version number for the agent. |
 | `method_name` | `str \| None` | `None` | Required when decorating a class. Specifies which method to use as the entry point. |
 | `processors` | `str \| List[str] \| None` | `None` | Route this span to specific named processors. See [add_processor](/sdks/python/tracing/main/initialize#add_processor). |
+| `export_filter` | `FilterParamDict \| None` | `None` | Filter dict to control which spans are exported. Uses AND logic — all conditions must match. |
 
 ## Function usage
 
 ```python
-from respan_tracing import RespanTelemetry, agent, task, tool
+from respan import Respan, agent, task, tool
 from openai import OpenAI
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 client = OpenAI()
 
 @tool(name="search")
@@ -52,9 +53,9 @@ print(research_agent("OpenTelemetry tracing"))
 ## Class usage
 
 ```python
-from respan_tracing import RespanTelemetry, agent, task
+from respan import Respan, agent, task
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @agent(name="assistant", method_name="run")
 class Assistant:

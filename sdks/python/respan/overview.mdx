@@ -1,0 +1,92 @@
+---
+title: "Quickstart"
+description: "The recommended entry point for Respan. One import, one init, full observability."
+---
+
+## Overview
+
+`respan` is the recommended way to use Respan. It provides a single `Respan()` class that sets up tracing, activates instrumentation plugins, and will also initialize the Respan API client when available.
+
+```bash
+pip install respan-ai
+```
+
+**Version:** 3.0.0 | **Python:** `>=3.9, <4.0`
+
+## Quick start
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+agent = Agent(name="assistant", instructions="You are helpful.")
+
+async def handle_request(user_id: str, message: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_123",
+    ):
+        result = await Runner.run(agent, message)
+        return result.final_output
+```
+
+## What it does
+
+`Respan()` is a facade that orchestrates multiple backends:
+
+```
+Respan(api_key="...", instrumentations=[...])
+  │
+  ├─ RespanTelemetry   ← OTEL tracing pipeline
+  ├─ RespanAPI         ← REST API client (coming soon)
+  └─ Plugins           ← Activated instrumentations
+```
+
+You don't need to interact with `RespanTelemetry` or `RespanAPI` directly — `Respan` handles initialization and configuration for both.
+
+## Public exports
+
+Everything you need is available from `respan`:
+
+```python
+from respan import (
+    # Core
+    Respan,
+    Instrumentation,
+
+    # Decorators
+    workflow, task, agent, tool,
+
+    # Client
+    RespanClient, get_client,
+
+    # Context managers
+    propagate_attributes,
+    respan_span_attributes,
+)
+```
+
+## When to use `respan` vs `respan-tracing`
+
+| Use case | Package |
+|----------|---------|
+| Instrument OpenAI Agents, OpenAI SDK, etc. | `respan` |
+| Plugin + decorator combo | `respan` |
+| Decorators only, no plugins | `respan-tracing` directly |
+| Building a custom instrumentation plugin | `respan-tracing` + `respan-sdk` |
+| Need fine-grained OTEL control | `respan-tracing` directly |
+
+Most users should use `respan`. Use `respan-tracing` directly only when you need manual OTEL configuration.
+
+## Next steps
+
+- [Respan()](/sdks/python/respan/initialize) — constructor parameters and configuration examples
+- [propagate_attributes()](/sdks/python/respan/propagate-attributes) — attach user/thread/metadata to all spans
+- [log_batch_results()](/sdks/python/respan/log-batch-results) — log OpenAI Batch API results
+- [Instrumentation Protocol](/sdks/python/respan/instrumentation-protocol) — build your own plugin

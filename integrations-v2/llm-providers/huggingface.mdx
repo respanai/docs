@@ -1,0 +1,183 @@
+---
+title: "HuggingFace Transformers"
+description: "Trace HuggingFace Transformers calls with Respan — auto-instrumented spans and full observability for local models."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is HuggingFace Transformers?
+
+[HuggingFace Transformers](https://github.com/huggingface/transformers) is the leading open-source library for running state-of-the-art machine learning models locally. It provides pipelines for text generation, summarization, translation, and more. Respan can auto-instrument all Transformers calls for tracing and observability.
+
+<Note>
+HuggingFace Transformers runs models locally, so only **Tracing** setup is available. Gateway routing is not applicable for local models.
+</Note>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-transformers transformers torch python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+# Optional: for gated models on HuggingFace Hub
+# export HF_TOKEN="YOUR_HUGGINGFACE_TOKEN"
+```
+
+No provider API key needed for public models — Transformers runs models locally.
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from transformers import pipeline
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors (Traceloop)
+respan = Respan(is_auto_instrument=True)
+
+# Create a text generation pipeline (runs locally)
+generator = pipeline("text-generation", model="gpt2")
+
+# Calls run locally, auto-traced by Respan
+output = generator("Say hello in three languages:", max_new_tokens=100)
+print(output[0]["generated_text"])
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "local-inference", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from transformers import pipeline
+from respan import Respan, workflow, propagate_attributes
+
+respan = Respan(
+    is_auto_instrument=True,
+    metadata={"service": "local-inference", "version": "1.0.0"},
+)
+generator = pipeline("text-generation", model="gpt2")
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        output = generator(question, max_new_tokens=100)
+        print(output[0]["generated_text"])
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from transformers import pipeline
+from respan import Respan, workflow, task
+
+respan = Respan(is_auto_instrument=True)
+generator = pipeline("text-generation", model="gpt2")
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    output = generator(f"Create a brief outline about: {topic}", max_new_tokens=200)
+    return output[0]["generated_text"]
+
+@workflow(name="content_pipeline")
+def run_pipeline(topic: str):
+    plan = outline(topic)
+    output = generator(f"Write content from this outline: {plan}", max_new_tokens=300)
+    print(output[0]["generated_text"])
+
+run_pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic pipeline
+
+```python
+generator = pipeline("text-generation", model="gpt2")
+
+output = generator("Say hello in three languages:", max_new_tokens=100)
+print(output[0]["generated_text"])
+```

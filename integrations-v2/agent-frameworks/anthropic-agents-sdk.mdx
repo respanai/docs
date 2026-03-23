@@ -1,0 +1,293 @@
+---
+title: "Anthropic Agents SDK"
+description: "Trace Anthropic Agents SDK workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Anthropic Agents SDK?
+
+The [Anthropic Agents SDK](https://github.com/anthropics/anthropic-agent-sdk) (`claude-agent-sdk`) is a framework for building agent workflows powered by Claude. It supports tool use, sub-agent delegation, and structured conversations. The Respan exporter hooks into the SDK's lifecycle events to capture full trace data.
+
+## Setup
+
+<Note>
+The Anthropic Agents SDK uses an **exporter pattern** rather than the standard `Respan()` instrumentor pattern. The exporter wraps `query()` calls to capture traces.
+</Note>
+
+<Steps>
+<Step title="Install packages">
+
+<CodeGroup>
+```bash Python
+pip install claude-agent-sdk respan-exporter-anthropic-agents python-dotenv
+```
+```bash JavaScript
+npm install @anthropic-ai/claude-agent-sdk @respan/exporter-anthropic-agents dotenv
+```
+</CodeGroup>
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"
+```
+
+`RESPAN_API_KEY` is used for trace export. `ANTHROPIC_API_KEY` is used by the Claude Agent SDK to call Anthropic directly.
+
+<Accordion title="Using the Respan gateway instead?">
+You can skip `ANTHROPIC_API_KEY` by routing calls through the Respan gateway.
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+# No ANTHROPIC_API_KEY needed
+```
+
+Pass the gateway URL and key via `ClaudeAgentOptions.env`:
+
+```python
+options = ClaudeAgentOptions(
+    permission_mode="bypassPermissions",
+    max_turns=1,
+    env={
+        "ANTHROPIC_BASE_URL": "https://api.respan.ai/api/anthropic",
+        "ANTHROPIC_AUTH_TOKEN": RESPAN_API_KEY,
+        "ANTHROPIC_API_KEY": RESPAN_API_KEY,
+    },
+)
+```
+</Accordion>
+
+</Step>
+
+<Step title="Initialize and run">
+
+<CodeGroup>
+```python Python
+import os
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
+from claude_agent_sdk import ClaudeAgentOptions
+from respan_exporter_anthropic_agents import RespanAnthropicAgentsExporter
+
+exporter = RespanAnthropicAgentsExporter(
+    api_key=os.getenv("RESPAN_API_KEY"),
+    base_url=os.getenv("RESPAN_BASE_URL"),
+)
+
+async for message in exporter.query(
+    prompt="What is 2 + 2? Reply in one word.",
+    options=ClaudeAgentOptions(
+        permission_mode="bypassPermissions",
+        max_turns=1,
+    ),
+):
+    print(type(message).__name__)
+```
+```typescript JavaScript
+import "dotenv/config";
+import { query } from "@anthropic-ai/claude-agent-sdk";
+import { RespanAnthropicAgentsExporter } from "@respan/exporter-anthropic-agents";
+
+const exporter = new RespanAnthropicAgentsExporter({
+  apiKey: process.env.RESPAN_API_KEY!,
+});
+
+let sessionId: string | undefined;
+
+for await (const message of query({
+  prompt: "What is 2 + 2? Reply in one word.",
+  options: exporter.withOptions({
+    permissionMode: "bypassPermissions",
+    maxTurns: 1,
+  }),
+})) {
+  if (message.type === "system") sessionId = message.data?.session_id;
+  await exporter.trackMessage({ message, sessionId });
+  console.log(message.type);
+}
+```
+</CodeGroup>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your agent trace.
+
+</Step>
+</Steps>
+
+## Configuration
+
+<Tabs>
+<Tab title="Python">
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str` | `RESPAN_API_KEY` env var | Respan API key. |
+| `base_url` | `str` | `RESPAN_BASE_URL` env var | API base URL. |
+| `endpoint` | `str \| None` | `None` | Custom ingest endpoint URL. |
+| `timeout_seconds` | `int` | `15` | HTTP timeout for trace export. |
+| `max_retries` | `int` | `3` | Retry attempts for failed exports. |
+
+</Tab>
+<Tab title="JavaScript">
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `apiKey` | `string \| null` | `RESPAN_API_KEY` env var | Respan API key. |
+| `endpoint` | `string \| undefined` | `undefined` | Custom ingest endpoint URL. |
+| `timeoutMs` | `number` | `15000` | HTTP timeout in milliseconds. |
+| `maxRetries` | `number` | `3` | Retry attempts for failed exports. |
+
+</Tab>
+</Tabs>
+
+## Attributes
+
+The exporter automatically captures:
+
+| Attribute | Source | Description |
+|-----------|--------|-------------|
+| `session_id` | `SystemMessage` | Unique session identifier. |
+| `input_tokens` | `AssistantMessage.usage` | Prompt token count. |
+| `output_tokens` | `AssistantMessage.usage` | Completion token count. |
+| `cache_creation_input_tokens` | `AssistantMessage.usage` | Cache creation tokens. |
+| `cache_read_input_tokens` | `AssistantMessage.usage` | Cache read tokens. |
+| `model` | `AssistantMessage` | Model name used. |
+
+## Decorators
+
+The Anthropic Agents SDK uses the exporter pattern rather than `@workflow`/`@task` decorators. All lifecycle events are captured automatically by the exporter.
+
+## Examples
+
+### Wrapped query
+
+The simplest integration pattern -- `exporter.query()` handles tracing hooks automatically.
+
+```python
+from claude_agent_sdk import ClaudeAgentOptions
+from respan_exporter_anthropic_agents import RespanAnthropicAgentsExporter
+
+exporter = RespanAnthropicAgentsExporter()
+
+message_types = []
+async for message in exporter.query(
+    prompt="Name three primary colors.",
+    options=ClaudeAgentOptions(
+        permission_mode="bypassPermissions",
+        max_turns=1,
+    ),
+):
+    message_types.append(type(message).__name__)
+
+print(" -> ".join(message_types))
+# SystemMessage -> UserMessage -> AssistantMessage -> ResultMessage
+```
+
+### Tool use
+
+Tool calls are automatically captured as child spans with inputs and outputs.
+
+```python
+from claude_agent_sdk import ClaudeAgentOptions
+from respan_exporter_anthropic_agents import RespanAnthropicAgentsExporter
+
+exporter = RespanAnthropicAgentsExporter()
+
+async for message in exporter.query(
+    prompt="List the Python files in the current directory.",
+    options=ClaudeAgentOptions(
+        permission_mode="bypassPermissions",
+        max_turns=3,
+        allowed_tools=["Read", "Glob", "Grep"],
+    ),
+):
+    print(type(message).__name__)
+```
+
+### Streaming
+
+The `exporter.query()` method streams messages as they arrive.
+
+```python
+from claude_agent_sdk import ClaudeAgentOptions, ResultMessage
+from respan_exporter_anthropic_agents import RespanAnthropicAgentsExporter
+
+exporter = RespanAnthropicAgentsExporter()
+
+async for message in exporter.query(
+    prompt="Write a haiku about programming.",
+    options=ClaudeAgentOptions(
+        permission_mode="bypassPermissions",
+        max_turns=1,
+    ),
+):
+    msg_type = type(message).__name__
+
+    if msg_type == "AssistantMessage":
+        for block in getattr(message, "content", []):
+            if hasattr(block, "text"):
+                print(block.text)
+    elif isinstance(message, ResultMessage):
+        print(f"Done: {message.subtype}, turns={message.num_turns}")
+```
+
+### Traced events
+
+The exporter hooks into five SDK lifecycle events:
+
+| Event | Span Type | Description |
+|-------|-----------|-------------|
+| `UserPromptSubmit` | task | User submits a prompt. |
+| `PreToolUse` | -- | Tool invocation starts (paired with PostToolUse). |
+| `PostToolUse` | tool | Tool completes with input/output. |
+| `SubagentStop` | task | Sub-agent finishes execution. |
+| `Stop` | -- | Root agent terminates. |
+
+## Gateway
+
+You can route all Anthropic calls through the Respan gateway by setting environment variables:
+
+```bash
+export ANTHROPIC_BASE_URL="https://api.respan.ai/api/anthropic"
+export ANTHROPIC_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+Or configure via `ClaudeAgentOptions.env`:
+
+```python
+options = ClaudeAgentOptions(
+    permission_mode="bypassPermissions",
+    max_turns=1,
+    env={
+        "ANTHROPIC_BASE_URL": "https://api.respan.ai/api/anthropic",
+        "ANTHROPIC_AUTH_TOKEN": os.getenv("RESPAN_API_KEY"),
+        "ANTHROPIC_API_KEY": os.getenv("RESPAN_API_KEY"),
+    },
+)
+```

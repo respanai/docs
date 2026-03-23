@@ -1,398 +1,256 @@
 ---
 title: "Overview"
-description: "Integrate Respan with your LLM stack — tracing, gateway, and dev tools."
+description: "Integrate Respan with your LLM stack — agent frameworks, LLM SDKs, coding agents, and more."
 ---
 
-Respan integrates with your existing LLM stack. Choose the integration type that matches your use case.
+Respan integrates with your existing LLM stack. Choose the integration that matches your use case.
 
-## Tracing
+## Agent Frameworks
 
-Capture traces from your LLM applications and agent frameworks.
-
-### Native
+Build and trace multi-agent workflows with full observability.
 
 <CardGroup cols={3}>
-<Card href="/integrations/tracing/respan-native">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/respan_v0.png" alt="Respan" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/respan_v0_black.png" alt="Respan" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/openai-agents-sdk">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_agent_v0.png" alt="OpenAI Agents SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_agent_v0_black.png" alt="OpenAI Agents SDK" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/opentelemetry">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/otel_v0.png" alt="OpenTelemetry" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/otel_v0_black.png" alt="OpenTelemetry" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/anthropic-agents-sdk-tracing">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Claude Agent SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Claude Agent SDK" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/vercel-tracing">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vercel_v0.png" alt="Vercel AI SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vercel_v0_black.png" alt="Vercel AI SDK" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/langgraph">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langgraph_v0.png" alt="LangGraph" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langgraph_v0_black.png" alt="LangGraph" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/langchain">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langchain_v0.png" alt="LangChain" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langchain_v0_black.png" alt="LangChain" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/mastra">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mastra_v0.png" alt="Mastra" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mastra_v0_black.png" alt="Mastra" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/agno">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/agno_v0.png" alt="Agno" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/agno_v0_black.png" alt="Agno" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/pydantic-tracing">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/pydantic_v0.png" alt="PydanticAI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/pydantic_v0_black.png" alt="PydanticAI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/haystack-tracing">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/haystack_v0.png" alt="Haystack" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/haystack_v0_black.png" alt="Haystack" style={{ pointerEvents: 'none' }} />
 </Card>
 </CardGroup>
 
-### Integrations
+## LLM SDKs
+
+Trace and route LLM calls with auto-instrumentation.
 
 <CardGroup cols={3}>
-<Card href="/integrations/tracing/openai-agents-sdk">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_agent_v0.png" alt="OpenAI Agents SDK" style={{
-    pointerEvents: 'none',
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_agent_v0_black.png" alt="OpenAI Agents SDK" style={{
-    pointerEvents: 'none',
-  }} />
+<Card href="/integrations/openai-sdk">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0.png" alt="OpenAI SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0_black.png" alt="OpenAI SDK" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/anthropic-agents-sdk">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Anthropic Agents SDK" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Anthropic Agents SDK" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/anthropic">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Anthropic SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Anthropic SDK" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/vercel-tracing">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vercel_v0.png" alt="Vercel AI SDK" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vercel_v0_black.png" alt="Vercel AI SDK" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/google_genai">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/genai_v0.png" alt="Google GenAI SDK" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/genai_v0_black.png" alt="Google GenAI SDK" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/langgraph">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langgraph_v0.png" alt="LangGraph" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langgraph_v0_black.png" alt="LangGraph" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/litellm">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/litellm_v0.png" alt="LiteLLM" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/litellm_v0_black.png" alt="LiteLLM" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/haystack">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/haystack_v0.png" alt="Haystack" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/haystack_v0_black.png" alt="Haystack" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/llama-index">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/llamaindex_v0.png" alt="LlamaIndex" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/llamaindex_v0_black.png" alt="LlamaIndex" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/tracing/mastra">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mastra_v0.png" alt="Mastra" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mastra_v0_black.png" alt="Mastra" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/agno">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/agno_v0.png" alt="Agno" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/agno_v0_black.png" alt="Agno" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/baml">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/baml_v0.png" alt="BAML" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/baml_v0_black.png" alt="BAML" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/instructor">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/instructor_v0.png" alt="Instructor" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/instructor_v0_black.png" alt="Instructor" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/superagent">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/superagent_v0.png" alt="Superagent" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/superagent_v0_black.png" alt="Superagent" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/langfuse">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langfuse_v0.png" alt="Langfuse" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langfuse_v0_black.png" alt="Langfuse" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/tracing/braintrust">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/braintrust_v0.png" alt="Braintrust" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/braintrust_v0_black.png" alt="Braintrust" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/ruby_llm">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/rubyllm_v0.png" alt="RubyLLM" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/rubyllm_v0_black.png" alt="RubyLLM" style={{ pointerEvents: 'none' }} />
 </Card>
 </CardGroup>
 
-## Gateway
+## Coding Agents
 
-Route LLM requests through the Respan gateway to access 250+ models with unified observability.
-
-### Native
+Trace AI coding assistants and CLI tools.
 
 <CardGroup cols={3}>
-<Card href="/integrations/gateway/respan-api">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/respan_v0.png" alt="Respan" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/respan_v0_black.png" alt="Respan" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/dev-tools/claude-code">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/claude_code_v0.png" alt="Claude Code" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/claude_code_v0_black.png" alt="Claude Code" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations-v2/coding-agents/gemini-cli">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0.png" alt="Gemini CLI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0_black.png" alt="Gemini CLI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations-v2/coding-agents/codex-cli">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0.png" alt="Codex CLI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0_black.png" alt="Codex CLI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations-v2/coding-agents/opencode">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0.png" alt="OpenCode" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0_black.png" alt="OpenCode" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/cursor">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cursor_v0.png" alt="Cursor" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cursor_v0_black.png" alt="Cursor" style={{ pointerEvents: 'none' }} />
 </Card>
 </CardGroup>
 
-### Integrations
+## Vector DBs
 
 <CardGroup cols={3}>
-<Card href="/integrations/gateway/openai/openai-sdk">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0.png" alt="OpenAI SDK" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_sdk_v0_black.png" alt="OpenAI SDK" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/chromadb">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/chroma_v0.png" alt="ChromaDB" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/chroma_v0_black.png" alt="ChromaDB" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/anthropic">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Anthropic SDK" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Anthropic SDK" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/pinecone">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/pinecone_v0.png" alt="Pinecone" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/pinecone_v0_black.png" alt="Pinecone" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/google_genai">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/genai_v0.png" alt="Google GenAI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/genai_v0_black.png" alt="Google GenAI" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/qdrant">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/qdrant_v0.png" alt="Qdrant" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/qdrant_v0_black.png" alt="Qdrant" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/langchain">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langchain_v0.png" alt="LangChain" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langchain_v0_black.png" alt="LangChain" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/milvus">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/milvus_v0.png" alt="Milvus" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/milvus_v0_black.png" alt="Milvus" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/litellm">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/litellm_v0.png" alt="LiteLLM" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/litellm_v0_black.png" alt="LiteLLM" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/weaviate">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/weaviate_v0.png" alt="Weaviate" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/weaviate_v0_black.png" alt="Weaviate" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/llama-index">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/llamaindex_v0.png" alt="LlamaIndex" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/llamaindex_v0_black.png" alt="LlamaIndex" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/lancedb">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/lancedb_v0.png" alt="LanceDB" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/lancedb_v0_black.png" alt="LanceDB" style={{ pointerEvents: 'none' }} />
 </Card>
-<Card href="/integrations/gateway/ruby_llm">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/rubyllm_v0.png" alt="RubyLLM" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/rubyllm_v0_black.png" alt="RubyLLM" style={{
-    pointerEvents: 'none'
-  }} />
+<Card href="/integrations/marqo">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/marqo_v0.png" alt="Marqo" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/marqo_v0_black.png" alt="Marqo" style={{ pointerEvents: 'none' }} />
 </Card>
 </CardGroup>
 
-### LLM Providers
+## Others
+
+<CardGroup cols={3}>
+<Card href="/integrations/baml-tracing">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/baml_v0.png" alt="BAML" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/baml_v0_black.png" alt="BAML" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/instructor">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/instructor_v0.png" alt="Instructor" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/instructor_v0_black.png" alt="Instructor" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/superagent">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/superagent_v0.png" alt="Superagent" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/superagent_v0_black.png" alt="Superagent" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/langfuse">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langfuse_v0.png" alt="Langfuse" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/langfuse_v0_black.png" alt="Langfuse" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/braintrust">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/braintrust_v0.png" alt="Braintrust" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/braintrust_v0_black.png" alt="Braintrust" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/linkup">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/linkup_v0.png" alt="Linkup" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/linkup_v0_black.png" alt="Linkup" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/posthog">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/posthog_v0.png" alt="PostHog" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/posthog_v0_black.png" alt="PostHog" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/moda">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/moda_v0.png" alt="Moda" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/moda_v0_black.png" alt="Moda" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/mem0">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mem0_v0.png" alt="Mem0" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mem0_v0_black.png" alt="Mem0" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/hyperspell">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/hyperspell_v0.png" alt="Hyperspell" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/hyperspell_v0_black.png" alt="Hyperspell" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/cognee">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cognee_v0.png" alt="Cognee" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cognee_v0_black.png" alt="Cognee" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/assemblyai">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/assemblyai_v0.png" alt="AssemblyAI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/assemblyai_v0_black.png" alt="AssemblyAI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/dev-tools/zapier">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/zapier_v0.png" alt="Zapier" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/zapier_v0_black.png" alt="Zapier" style={{ pointerEvents: 'none' }} />
+</Card>
+</CardGroup>
+
+## Model Providers
 
 <CardGroup cols={3}>
 <Card href="/integrations/providers/openai">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_gpt_v0.png" alt="OpenAI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_gpt_v0_black.png" alt="OpenAI" style={{
-    pointerEvents: 'none'
-  }} />
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_gpt_v0.png" alt="OpenAI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openai_gpt_v0_black.png" alt="OpenAI" style={{ pointerEvents: 'none' }} />
 </Card>
 <Card href="/integrations/providers/anthropic">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Anthropic" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Anthropic" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/openrouter">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openrouter_v0.png" alt="OpenRouter" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openrouter_v0_black.png" alt="OpenRouter" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/groq">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/groq_v0.png" alt="Groq" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/groq_v0_black.png" alt="Groq" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/fireworks">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/fireworks_v0.png" alt="Fireworks" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/fireworks_v0_black.png" alt="Fireworks" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/together">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/togetherai_v0.png" alt="Together AI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/togetherai_v0_black.png" alt="Together AI" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/perplexity">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/perplexity_v0.png" alt="Perplexity AI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/perplexity_v0_black.png" alt="Perplexity AI" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/azure">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/azure_openai_v0.png" alt="Azure OpenAI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/azure_openai_v0_black.png" alt="Azure OpenAI" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/vertex">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vertex_v0.png" alt="Google Vertex AI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vertex_v0_black.png" alt="Google Vertex AI" style={{
-    pointerEvents: 'none'
-  }} />
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0.png" alt="Anthropic" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/anthropic_v0_black.png" alt="Anthropic" style={{ pointerEvents: 'none' }} />
 </Card>
 <Card href="/integrations/providers/gemini">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0.png" alt="Gemini" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0_black.png" alt="Gemini" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/providers/bedrock">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/aws_bedrock_v0.png" alt="AWS Bedrock" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/aws_bedrock_v0_black.png" alt="AWS Bedrock" style={{
-    pointerEvents: 'none'
-  }} />
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0.png" alt="Gemini" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/gemini_v0_black.png" alt="Gemini" style={{ pointerEvents: 'none' }} />
 </Card>
 <Card href="/integrations/providers/deepseek">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/deepseek_v0.png" alt="DeepSeek" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/deepseek_v0_black.png" alt="DeepSeek" style={{
-    pointerEvents: 'none'
-  }} />
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/deepseek_v0.png" alt="DeepSeek" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/deepseek_v0_black.png" alt="DeepSeek" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/groq">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/groq_v0.png" alt="Groq" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/groq_v0_black.png" alt="Groq" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/mistral">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mistral_v0.png" alt="Mistral" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mistral_v0_black.png" alt="Mistral" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/openrouter">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openrouter_v0.png" alt="OpenRouter" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/openrouter_v0_black.png" alt="OpenRouter" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/fireworks">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/fireworks_v0.png" alt="Fireworks AI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/fireworks_v0_black.png" alt="Fireworks AI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/together">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/togetherai_v0.png" alt="Together AI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/togetherai_v0_black.png" alt="Together AI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/perplexity">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/perplexity_v0.png" alt="Perplexity AI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/perplexity_v0_black.png" alt="Perplexity AI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/bedrock">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/aws_bedrock_v0.png" alt="AWS Bedrock" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/aws_bedrock_v0_black.png" alt="AWS Bedrock" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/vertex">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vertex_v0.png" alt="Google Vertex AI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/vertex_v0_black.png" alt="Google Vertex AI" style={{ pointerEvents: 'none' }} />
+</Card>
+<Card href="/integrations/providers/azure">
+  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/azure_openai_v0.png" alt="Azure OpenAI" style={{ pointerEvents: 'none' }} />
+  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/azure_openai_v0_black.png" alt="Azure OpenAI" style={{ pointerEvents: 'none' }} />
 </Card>
 </CardGroup>
 
 To see the full list of supported LLMs, check out the [public model library](https://www.respan.ai/llm-library).
-
-## Dev Tools
-
-<CardGroup cols={3}>
-<Card href="/integrations/dev-tools/cursor">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cursor_v0.png" alt="Cursor" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cursor_v0_black.png" alt="Cursor" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/claude-code">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/claude_code_v0.png" alt="Claude Code" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/claude_code_v0_black.png" alt="Claude Code" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/linkup">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/linkup_v0.png" alt="Linkup" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/linkup_v0_black.png" alt="Linkup" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/posthog">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/posthog_v0.png" alt="PostHog" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/posthog_v0_black.png" alt="PostHog" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/moda">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/moda_v0.png" alt="Moda" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/moda_v0_black.png" alt="Moda" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/mem0">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mem0_v0.png" alt="Mem0" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/mem0_v0_black.png" alt="Mem0" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/hyperspell">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/hyperspell_v0.png" alt="Hyperspell" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/hyperspell_v0_black.png" alt="Hyperspell" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/cognee">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cognee_v0.png" alt="Cognee" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/cognee_v0_black.png" alt="Cognee" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/assemblyai">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/assemblyai_v0.png" alt="AssemblyAI" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/assemblyai_v0_black.png" alt="AssemblyAI" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-<Card href="/integrations/dev-tools/zapier">
-  <img className="block dark:hidden" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/zapier_v0.png" alt="Zapier" style={{
-    pointerEvents: 'none'
-  }} />
-  <img className="hidden dark:block" src="https://keywordsai-static.s3.us-east-1.amazonaws.com/docs/Integrations/integration_cards/zapier_v0_black.png" alt="Zapier" style={{
-    pointerEvents: 'none'
-  }} />
-</Card>
-</CardGroup>

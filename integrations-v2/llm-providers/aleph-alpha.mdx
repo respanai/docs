@@ -1,0 +1,198 @@
+---
+title: "Aleph Alpha"
+description: "Trace Aleph Alpha calls with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Aleph Alpha?
+
+[Aleph Alpha](https://github.com/Aleph-Alpha/aleph-alpha-client) is a European AI company providing sovereign AI solutions. The Aleph Alpha Python client supports completions, embeddings, and semantic search. Respan can auto-instrument all Aleph Alpha calls for tracing and observability.
+
+<Note>
+Aleph Alpha uses a proprietary API format, so only **Tracing** setup is available. Gateway routing is not supported.
+</Note>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-alephalpha aleph-alpha-client python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export ALEPH_ALPHA_API_KEY="YOUR_ALEPH_ALPHA_API_KEY"
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from aleph_alpha_client import Client, CompletionRequest, Prompt
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors (Traceloop)
+respan = Respan(is_auto_instrument=True)
+
+# Initialize Aleph Alpha client
+client = Client(token=os.getenv("ALEPH_ALPHA_API_KEY"))
+
+# Calls go directly to Aleph Alpha, auto-traced by Respan
+request = CompletionRequest(
+    prompt=Prompt.from_text("Say hello in three languages."),
+    maximum_tokens=128,
+)
+response = client.complete(request, model="luminous-supreme-control")
+print(response.completions[0].completion)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "completion-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from aleph_alpha_client import Client, CompletionRequest, Prompt
+from respan import Respan, workflow, propagate_attributes
+
+respan = Respan(
+    is_auto_instrument=True,
+    metadata={"service": "completion-api", "version": "1.0.0"},
+)
+client = Client(token=os.getenv("ALEPH_ALPHA_API_KEY"))
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "enterprise"},
+    ):
+        request = CompletionRequest(
+            prompt=Prompt.from_text(question),
+            maximum_tokens=128,
+        )
+        response = client.complete(request, model="luminous-supreme-control")
+        print(response.completions[0].completion)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from aleph_alpha_client import Client, CompletionRequest, Prompt
+from respan import Respan, workflow, task
+
+respan = Respan(is_auto_instrument=True)
+client = Client(token=os.getenv("ALEPH_ALPHA_API_KEY"))
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    request = CompletionRequest(
+        prompt=Prompt.from_text(f"Create a brief outline about: {topic}"),
+        maximum_tokens=256,
+    )
+    response = client.complete(request, model="luminous-supreme-control")
+    return response.completions[0].completion
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    request = CompletionRequest(
+        prompt=Prompt.from_text(f"Write content from this outline: {plan}"),
+        maximum_tokens=512,
+    )
+    response = client.complete(request, model="luminous-supreme-control")
+    print(response.completions[0].completion)
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic completion
+
+```python
+request = CompletionRequest(
+    prompt=Prompt.from_text("Say hello in three languages."),
+    maximum_tokens=128,
+)
+response = client.complete(request, model="luminous-supreme-control")
+print(response.completions[0].completion)
+```

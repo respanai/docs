@@ -1,0 +1,142 @@
+---
+title: "propagate_attributes()"
+description: "Attach user, thread, and metadata to all spans within a scope."
+---
+
+## Overview
+
+`propagate_attributes()` is a context manager that attaches attributes to **all spans** within its scope — including spans created by auto-instrumentation and instrumentation plugins. Uses `contextvars` for async safety.
+
+```python
+from respan import propagate_attributes
+```
+
+This is the recommended way to attach per-request context (user ID, thread ID, metadata) to traces.
+
+## Parameters
+
+All parameters are keyword-only:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | User/customer identifier. Maps to `respan.customer_params.customer_identifier`. |
+| `customer_email` | `str` | Customer email. Maps to `respan.customer_params.customer_email`. |
+| `customer_name` | `str` | Customer display name. Maps to `respan.customer_params.customer_name`. |
+| `thread_identifier` | `str` | Conversation thread ID. Maps to `respan.threads.thread_identifier`. |
+| `custom_identifier` | `str` | Indexed custom identifier. Maps to `respan.custom_identifier`. |
+| `group_identifier` | `str` | Group related traces. Maps to `respan.trace_group.group_identifier`. |
+| `environment` | `str` | Environment name. Maps to `respan.environment`. |
+| `metadata` | `dict` | Custom key-value pairs. Each key maps to `respan.metadata.<key>`. Nested calls merge metadata. |
+| `prompt` | `dict` | Prompt config with `prompt_id` and `variables`. Stored as JSON for server-side template resolution. |
+
+Unsupported keys are logged as warnings and ignored.
+
+## Examples
+
+### Per-request user and thread tracking
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+from agents import Agent, Runner
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+
+agent = Agent(name="assistant", instructions="You are helpful.")
+
+async def handle_request(user_id: str, thread_id: str, message: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier=thread_id,
+        metadata={"source": "web", "plan": "pro"},
+    ):
+        result = await Runner.run(agent, message)
+        return result.final_output
+```
+
+All spans created during `Runner.run()` — the trace, agent, LLM response, tool calls — will carry the `customer_identifier`, `thread_identifier`, and metadata.
+
+### Prompt logging
+
+Use the `prompt` parameter for server-side prompt template resolution:
+
+```python
+with propagate_attributes(
+    prompt={
+        "prompt_id": "abc123",
+        "variables": {"topic": "Python", "style": "concise"},
+    },
+):
+    result = await Runner.run(agent, "Tell me about Python")
+```
+
+The Respan backend resolves the template and displays the rendered prompt alongside the raw messages.
+
+### With direct OpenAI SDK
+
+```python
+from respan import Respan, propagate_attributes
+from respan_instrumentation_openai import OpenAIInstrumentor
+from openai import OpenAI
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIInstrumentor()],
+)
+client = OpenAI()
+
+def handle_request(user_id: str, message: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        metadata={"source": "api"},
+    ):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": message}],
+        )
+        return response.choices[0].message.content
+```
+
+## Nested contexts
+
+Nested calls merge attributes. Inner values override outer values for the same key. Metadata dicts are merged (not replaced).
+
+```python
+with propagate_attributes(
+    customer_identifier="user-A",
+    metadata={"plan": "free", "region": "us"},
+):
+    # Spans here: customer_identifier="user-A", plan="free", region="us"
+
+    with propagate_attributes(
+        customer_identifier="user-B",
+        metadata={"plan": "pro"},
+    ):
+        # Spans here: customer_identifier="user-B", plan="pro", region="us"
+        # customer_identifier overridden, plan overridden, region inherited
+        pass
+```
+
+## How it works
+
+1. Attributes are stored in a `ContextVar` (`_PROPAGATED_ATTRIBUTES`).
+2. `RespanSpanProcessor.on_start()` reads the `ContextVar` and merges attributes onto every new span.
+3. `build_readable_span()` also reads the `ContextVar` and merges into plugin-created spans.
+4. On context exit, the `ContextVar` is reset to the previous value.
+
+This works correctly with `asyncio` — each task gets its own copy of the context.
+
+## vs respan_span_attributes()
+
+| Feature | `propagate_attributes()` | `respan_span_attributes()` |
+|---------|--------------------------|---------------------------|
+| Scope | All spans in context (including auto-instrumented) | Current active span only |
+| Async safe | Yes (ContextVar-based) | Yes |
+| Nested merging | Yes (metadata merges) | Yes (inner overrides outer) |
+| Works with plugins | Yes | Only for decorator-created spans |
+| Prompt logging | Yes | No |
+
+Use `propagate_attributes()` in most cases. Use `respan_span_attributes()` only when you need to set attributes on a specific decorator-created span.

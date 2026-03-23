@@ -1,5 +1,5 @@
 ---
-title: "RespanTelemetry"
+title: "RespanTelemetry()"
 description: "Initialize the tracing SDK and configure exporters, instrumentation, and processing."
 ---
 
@@ -33,6 +33,7 @@ When `api_key` is provided (or set via `RESPAN_API_KEY` env var), the SDK automa
 | `resource_attributes` | `Dict[str, str] \| None` | `None` | OpenTelemetry resource attributes added to all spans. |
 | `span_postprocess_callback` | `Callable \| None` | `None` | Callback invoked on each span before export. |
 | `is_enabled` | `bool` | `True` | Set to `False` to disable telemetry entirely (no-op mode). |
+| `auto_instrument` | `bool` | `True` | Enable OTEL auto-instrumentation for supported libraries. Set to `False` when using instrumentation plugins to avoid duplicate spans. |
 
 ## Environment variables
 

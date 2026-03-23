@@ -14,9 +14,9 @@ Returns the current trace ID as a 32-character hex string, or `None` when no spa
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, get_client, workflow
+from respan import Respan, get_client, workflow
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="trace_demo")
 def trace_demo():

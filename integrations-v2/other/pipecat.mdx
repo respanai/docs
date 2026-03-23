@@ -1,0 +1,246 @@
+---
+title: "Pipecat"
+description: "Trace Pipecat operations with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Pipecat?
+
+[Pipecat](https://github.com/pipecat-ai/pipecat) is a Python framework for building voice and multimodal AI agents. It provides a pipeline architecture for composing speech-to-text, LLM, and text-to-speech services into real-time conversational agents. The Respan integration uses the OpenInference instrumentor to capture all pipeline operations, LLM calls, and service interactions as traced spans.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai openinference-instrumentation-pipecat "pipecat-ai[openai,daily]" python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+export DAILY_API_KEY="YOUR_DAILY_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.pipecat import PipecatInstrumentor
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner
+from pipecat.pipeline.task import PipelineTask
+from pipecat.services.openai import OpenAILLMService
+from pipecat.frames.frames import TextFrame, EndFrame
+
+# Initialize Respan with Pipecat instrumentation
+respan = Respan(instrumentations=[PipecatInstrumentor()])
+
+async def main():
+    # Create an OpenAI LLM service
+    llm = OpenAILLMService(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model="gpt-4o-mini",
+    )
+
+    # Build a simple pipeline
+    pipeline = Pipeline([llm])
+
+    runner = PipelineRunner()
+    task = PipelineTask(pipeline)
+
+    # Queue frames and run
+    await task.queue_frame(TextFrame("Tell me a fun fact about space."))
+    await task.queue_frame(EndFrame())
+    await runner.run(task)
+
+asyncio.run(main())
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your pipeline operations, LLM calls, and service interactions as traced spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `PipecatInstrumentor()`). |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.pipecat import PipecatInstrumentor
+
+respan = Respan(
+    instrumentations=[PipecatInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "voice-agent", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+from openinference.instrumentation.pipecat import PipecatInstrumentor
+
+respan = Respan(instrumentations=[PipecatInstrumentor()])
+
+async def handle_session(user_id: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="call_001",
+        metadata={"plan": "pro"},
+    ):
+        # Run your Pipecat pipeline here
+        pass
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Voice pipeline with STT and TTS
+
+Build a complete voice agent with speech-to-text, LLM processing, and text-to-speech. All pipeline stages are traced.
+
+```python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.pipecat import PipecatInstrumentor
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner
+from pipecat.pipeline.task import PipelineParams, PipelineTask
+from pipecat.services.openai import OpenAILLMService, OpenAITTSService
+from pipecat.services.deepgram import DeepgramSTTService
+
+respan = Respan(instrumentations=[PipecatInstrumentor()])
+
+async def main():
+    stt = DeepgramSTTService(
+        api_key=os.getenv("DEEPGRAM_API_KEY"),
+    )
+
+    llm = OpenAILLMService(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model="gpt-4o-mini",
+    )
+
+    tts = OpenAITTSService(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        voice="alloy",
+    )
+
+    # STT -> LLM -> TTS pipeline
+    pipeline = Pipeline([stt, llm, tts])
+
+    runner = PipelineRunner()
+    task = PipelineTask(
+        pipeline,
+        params=PipelineParams(allow_interruptions=True),
+    )
+    await runner.run(task)
+
+asyncio.run(main())
+respan.flush()
+```
+
+### Conversational agent with system prompt
+
+Configure an LLM service with a system prompt for a specific conversational personality.
+
+```python
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.pipecat import PipecatInstrumentor
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner
+from pipecat.pipeline.task import PipelineTask
+from pipecat.services.openai import OpenAILLMService
+from pipecat.frames.frames import TextFrame, EndFrame
+
+respan = Respan(instrumentations=[PipecatInstrumentor()])
+
+async def main():
+    llm = OpenAILLMService(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        model="gpt-4o-mini",
+        system_prompt="You are a friendly travel guide. Give concise, helpful answers about destinations.",
+    )
+
+    pipeline = Pipeline([llm])
+
+    runner = PipelineRunner()
+    task = PipelineTask(pipeline)
+
+    await task.queue_frame(TextFrame("What are the top 3 things to do in Tokyo?"))
+    await task.queue_frame(EndFrame())
+    await runner.run(task)
+
+asyncio.run(main())
+respan.flush()
+```

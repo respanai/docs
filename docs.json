@@ -157,6 +157,7 @@
                 "pages": [
                   "/documentation/resources/cookbooks/end-to-end-production",
                   "/documentation/resources/cookbooks/trace-rag-pipeline",
+                  "/documentation/resources/cookbooks/trace-cli-coding-agents",
                   "/documentation/resources/cookbooks/monitor-ai-agent",
                   "/documentation/resources/cookbooks/eval-pipeline-from-logs",
                   "/documentation/resources/cookbooks/ab-test-prompts",
@@ -197,122 +198,90 @@
             ]
           },
           {
-            "group": "Tracing",
+            "group": "Agent Frameworks",
             "pages": [
+              "/integrations/openai-agents-sdk",
               {
-                "group": "Native",
+                "group": "Claude Agent SDK",
                 "pages": [
-                  "/integrations/tracing/respan-native",
-                  "/integrations/tracing/opentelemetry"
+                  "/integrations/anthropic-agents-sdk-tracing",
+                  "/integrations/anthropic-agents-sdk-gateway"
                 ]
               },
               {
-                "group": "Integrations",
+                "group": "Vercel AI SDK",
                 "pages": [
-                  "/integrations/tracing/openai-agents-sdk",
-                  "/integrations/tracing/anthropic-agents-sdk",
-                  "/integrations/tracing/vercel-tracing",
-                  "/integrations/tracing/langgraph",
-                  "/integrations/tracing/haystack",
-                  "/integrations/tracing/mastra",
-                  "/integrations/tracing/agno",
-                  "/integrations/tracing/baml",
-                  "/integrations/tracing/instructor",
-                  "/integrations/tracing/superagent",
-                  "/integrations/tracing/pydantic",
-                  "/integrations/tracing/langfuse",
-                  "/integrations/tracing/braintrust"
+                  "/integrations/vercel-tracing",
+                  "/integrations/vercel-gateway"
+                ]
+              },
+              "/integrations/langgraph",
+              "/integrations/langchain",
+              "/integrations/mastra",
+              "/integrations/agno",
+              {
+                "group": "PydanticAI",
+                "pages": [
+                  "/integrations/pydantic-tracing",
+                  "/integrations/pydantic-gateway"
                 ]
               },
               {
-                "group": "Vector Databases",
+                "group": "Haystack",
                 "pages": [
-                  "/integrations/tracing/chromadb",
-                  "/integrations/tracing/pinecone",
-                  "/integrations/tracing/qdrant",
-                  "/integrations/tracing/milvus",
-                  "/integrations/tracing/weaviate",
-                  "/integrations/tracing/lancedb",
-                  "/integrations/tracing/marqo"
+                  "/integrations/haystack-tracing",
+                  "/integrations/haystack-gateway"
                 ]
               }
             ]
           },
           {
-            "group": "Gateway",
+            "group": "LLM SDKs",
             "pages": [
-              {
-                "group": "Native",
-                "pages": [
-                  "/integrations/gateway/respan-api"
-                ]
-              },
-              {
-                "group": "Integrations",
-                "pages": [
-                  "/integrations/gateway/openai-agents-sdk",
-                  "/integrations/gateway/anthropic-agents-sdk",
-                  "/integrations/gateway/vercel",
-                  "/integrations/gateway/openai/openai-sdk",
-                  "/integrations/gateway/anthropic",
-                  "/integrations/gateway/google_genai",
-                  "/integrations/gateway/langchain",
-                  "/integrations/gateway/litellm",
-                  "/integrations/gateway/llama-index",
-                  "/integrations/gateway/ruby_llm",
-                  "/integrations/gateway/haystack",
-                  "/integrations/gateway/baml",
-                  "/integrations/gateway/pydantic"
-                ]
-              }
+              "/integrations/openai-sdk",
+              "/integrations/anthropic",
+              "/integrations/google_genai",
+              "/integrations/litellm",
+              "/integrations/llama-index",
+              "/integrations/ruby_llm"
             ]
           },
           {
-            "group": "LLM Providers",
+            "group": "Coding Agents",
             "pages": [
-              {
-                "group": "Model providers",
-                "pages": [
-                  "/integrations/providers/openai",
-                  "/integrations/providers/anthropic",
-                  "/integrations/providers/gemini",
-                  "/integrations/providers/mistral",
-                  "/integrations/providers/baseten",
-                  "/integrations/providers/fireworks",
-                  "/integrations/providers/groq",
-                  "/integrations/providers/perplexity",
-                  "/integrations/providers/replicate",
-                  "/integrations/providers/together",
-                  "/integrations/providers/xAI",
-                  "/integrations/providers/ai21labs",
-                  "/integrations/providers/cohere",
-                  "/integrations/providers/deepseek",
-                  "/integrations/providers/inference",
-                  "/integrations/providers/moonshot",
-                  "/integrations/providers/nebius",
-                  "/integrations/providers/nextbit",
-                  "/integrations/providers/novita",
-                  "/integrations/providers/openrouter",
-                  "/integrations/providers/parasail",
-                  "/integrations/providers/reducto"
-                ]
-              },
-              {
-                "group": "Cloud providers",
-                "pages": [
-                  "/integrations/providers/bedrock",
-                  "/integrations/providers/vertex",
-                  "/integrations/providers/azure"
-                ]
-              },
-              "/integrations/providers/custom"
-            ]
-          },
-          {
-            "group": "Dev Tools",
-            "pages": [
-              "/integrations/dev-tools/cursor",
               "/integrations/dev-tools/claude-code",
+              "/integrations-v2/coding-agents/gemini-cli",
+              "/integrations-v2/coding-agents/codex-cli",
+              "/integrations-v2/coding-agents/opencode",
+              "/integrations/dev-tools/cursor"
+            ]
+          },
+          {
+            "group": "Vector DBs",
+            "pages": [
+              "/integrations/chromadb",
+              "/integrations/pinecone",
+              "/integrations/qdrant",
+              "/integrations/milvus",
+              "/integrations/weaviate",
+              "/integrations/lancedb",
+              "/integrations/marqo"
+            ]
+          },
+          {
+            "group": "Others",
+            "pages": [
+              {
+                "group": "BAML",
+                "pages": [
+                  "/integrations/baml-tracing",
+                  "/integrations/baml-gateway"
+                ]
+              },
+              "/integrations/instructor",
+              "/integrations/superagent",
+              "/integrations/langfuse",
+              "/integrations/braintrust",
               "/integrations/dev-tools/linkup",
               "/integrations/dev-tools/posthog",
               "/integrations/dev-tools/moda",
@@ -321,6 +290,37 @@
               "/integrations/dev-tools/cognee",
               "/integrations/dev-tools/assemblyai",
               "/integrations/dev-tools/zapier"
+            ]
+          },
+          {
+            "group": "Model Providers",
+            "pages": [
+              "/integrations/providers/openai",
+              "/integrations/providers/anthropic",
+              "/integrations/providers/gemini",
+              "/integrations/providers/deepseek",
+              "/integrations/providers/groq",
+              "/integrations/providers/mistral",
+              "/integrations/providers/cohere",
+              "/integrations/providers/together",
+              "/integrations/providers/fireworks",
+              "/integrations/providers/perplexity",
+              "/integrations/providers/openrouter",
+              "/integrations/providers/replicate",
+              "/integrations/providers/xAI",
+              "/integrations/providers/ai21labs",
+              "/integrations/providers/bedrock",
+              "/integrations/providers/vertex",
+              "/integrations/providers/azure",
+              "/integrations/providers/baseten",
+              "/integrations/providers/inference",
+              "/integrations/providers/moonshot",
+              "/integrations/providers/nebius",
+              "/integrations/providers/nextbit",
+              "/integrations/providers/novita",
+              "/integrations/providers/parasail",
+              "/integrations/providers/reducto",
+              "/integrations/providers/custom"
             ]
           }
         ]
@@ -611,62 +611,74 @@
         "tab": "SDKs",
         "groups": [
           {
-            "group": "Python",
+            "group": "Python SDK",
             "pages": [
+              "/sdks/python/respan/overview",
+              "/sdks/python/respan/initialize",
               {
-                "group": "respan-tracing",
+                "group": "Decorators",
                 "pages": [
-                  {
-                    "group": "Getting Started",
-                    "pages": [
-                      "/sdks/python/tracing/quickstart",
-                      "/sdks/python/tracing/examples"
-                    ]
-                  },
-                  {
-                    "group": "Decorators",
-                    "pages": [
-                      "/sdks/python/tracing/decorators/workflow",
-                      "/sdks/python/tracing/decorators/task",
-                      "/sdks/python/tracing/decorators/agent",
-                      "/sdks/python/tracing/decorators/tool"
-                    ]
-                  },
-                  {
-                    "group": "Client API",
-                    "pages": [
-                      "/sdks/python/tracing/main/initialize",
-                      "/sdks/python/tracing/client/get-client",
-                      "/sdks/python/tracing/client/get-current-trace-id",
-                      "/sdks/python/tracing/client/get-current-span-id",
-                      "/sdks/python/tracing/client/update-current-span",
-                      "/sdks/python/tracing/client/add-event",
-                      "/sdks/python/tracing/client/record-exception",
-                      "/sdks/python/tracing/client/get-context-value",
-                      "/sdks/python/tracing/client/set-context-value",
-                      "/sdks/python/tracing/client/is-recording",
-                      "/sdks/python/tracing/client/get-tracer",
-                      "/sdks/python/tracing/client/flush",
-                      "/sdks/python/tracing/client/get-span-buffer",
-                      "/sdks/python/tracing/client/export-spans"
-                    ]
-                  },
-                  {
-                    "group": "Contexts",
-                    "pages": [
-                      "/sdks/python/tracing/contexts/respan-span-attributes"
-                    ]
-                  },
-                  {
-                    "group": "Instrumentation",
-                    "pages": [
-                      "/sdks/python/tracing/instrumentation/overview"
-                    ]
-                  }
+                  "/sdks/python/tracing/decorators/workflow",
+                  "/sdks/python/tracing/decorators/task",
+                  "/sdks/python/tracing/decorators/agent",
+                  "/sdks/python/tracing/decorators/tool"
                 ]
               },
               {
-                "group": "Exporters",
+                "group": "Context",
+                "pages": [
+                  "/sdks/python/respan/propagate-attributes",
+                  "/sdks/python/tracing/contexts/respan-span-attributes"
+                ]
+              },
+              {
+                "group": "Client API",
+                "pages": [
+                  "/sdks/python/tracing/client/get-client",
+                  "/sdks/python/tracing/client/get-current-trace-id",
+                  "/sdks/python/tracing/client/get-current-span-id",
+                  "/sdks/python/tracing/client/update-current-span",
+                  "/sdks/python/tracing/client/add-event",
+                  "/sdks/python/tracing/client/record-exception",
+                  "/sdks/python/tracing/client/get-context-value",
+                  "/sdks/python/tracing/client/set-context-value",
+                  "/sdks/python/tracing/client/is-recording",
+                  "/sdks/python/tracing/client/get-tracer",
+                  "/sdks/python/tracing/client/flush",
+                  "/sdks/python/tracing/client/get-span-buffer",
+                  "/sdks/python/tracing/client/export-spans"
+                ]
+              },
+              "/sdks/python/respan/log-batch-results",
+              {
+                "group": "Instrumentations",
+                "pages": [
+                  "/sdks/python/instruments/openai-agents",
+                  "/sdks/python/instruments/openai"
+                ]
+              },
+              "/sdks/python/respan/instrumentation-protocol",
+              {
+                "group": "Advanced",
+                "pages": [
+                  "/sdks/python/tracing/main/initialize",
+                  "/sdks/python/tracing/instrumentation/overview"
+                ]
+              },
+              {
+                "group": "Types Reference",
+                "pages": [
+                  "/sdks/python/sdk/overview"
+                ]
+              },
+              {
+                "group": "API Client (Coming Soon)",
+                "pages": [
+                  "/sdks/python/api/overview"
+                ]
+              },
+              {
+                "group": "Exporters (Legacy)",
                 "pages": [
                   "/sdks/python/exporters/openai-agents",
                   "/sdks/python/exporters/anthropic-agents",
@@ -836,23 +848,23 @@
   "redirects": [
     {
       "source": "/integrations/development-frameworks/openai-agent",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integrations/development-frameworks/openai-agents-sdk-js",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
-      "source": "/integrations/tracing/openai-agents-sdk-js",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "source": "/integrations/openai-agents-sdk",
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
-      "source": "/integrations/tracing/anthropic-agents-sdk-js",
-      "destination": "/integrations/tracing/anthropic-agents-sdk"
+      "source": "/integrations/anthropic-agents-sdk-tracing",
+      "destination": "/integrations/anthropic-agents-sdk-tracing"
     },
     {
-      "source": "/integrations/gateway/openai/openai-responses",
-      "destination": "/integrations/gateway/openai/openai-sdk#responses-api"
+      "source": "/integrations/openai-responses",
+      "destination": "/integrations/openai-sdk#responses-api"
     },
     {
       "source": "/integrations/analytics/posthog",
@@ -884,11 +896,11 @@
     },
     {
       "source": "/integrations/others/baml",
-      "destination": "/integrations/tracing/baml"
+      "destination": "/integrations/baml-tracing"
     },
     {
       "source": "/integrations/development-frameworks/openai-sdk",
-      "destination": "/integrations/gateway/openai/openai-sdk"
+      "destination": "/integrations/openai-sdk"
     },
     {
       "source": "/documentation/getting-started/llm-inference",
@@ -896,79 +908,79 @@
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/openai/openai-sdk",
-      "destination": "/integrations/gateway/openai/openai-sdk"
+      "destination": "/integrations/openai-sdk"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/openai/openai-responses",
-      "destination": "/integrations/gateway/openai/openai-sdk#responses-api"
+      "destination": "/integrations/openai-sdk#responses-api"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/anthropic",
-      "destination": "/integrations/gateway/anthropic"
+      "destination": "/integrations/anthropic"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/langchain",
-      "destination": "/integrations/gateway/langchain"
+      "destination": "/integrations/langchain"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/litellm",
-      "destination": "/integrations/gateway/litellm"
+      "destination": "/integrations/litellm"
     },
     {
-      "source": "/integrations/tracing/litellm",
-      "destination": "/integrations/gateway/litellm"
+      "source": "/integrations/litellm",
+      "destination": "/integrations/litellm"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/haystack",
-      "destination": "/integrations/tracing/haystack"
+      "destination": "/integrations/haystack-tracing"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/vercel",
-      "destination": "/integrations/tracing/vercel-tracing"
+      "destination": "/integrations/vercel-tracing"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/llama-index",
-      "destination": "/integrations/gateway/llama-index"
+      "destination": "/integrations/llama-index"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/google_genai",
-      "destination": "/integrations/gateway/google_genai"
+      "destination": "/integrations/google_genai"
     },
     {
       "source": "/integrations/development-frameworks/llm_framework/ruby_llm",
-      "destination": "/integrations/gateway/ruby_llm"
+      "destination": "/integrations/ruby_llm"
     },
     {
       "source": "/integrations/development-frameworks/tracing/openai-agents-sdk",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integrations/development-frameworks/tracing/openai-agents-sdk-js",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integrations/development-frameworks/tracing/mastra",
-      "destination": "/integrations/tracing/mastra"
+      "destination": "/integrations/mastra"
     },
     {
       "source": "/integrations/development-frameworks/tracing/langgraph",
-      "destination": "/integrations/tracing/langgraph"
+      "destination": "/integrations/langgraph"
     },
     {
       "source": "/integrations/development-frameworks/tracing/langfuse",
-      "destination": "/integrations/tracing/langfuse"
+      "destination": "/integrations/langfuse"
     },
     {
       "source": "/integrations/development-frameworks/tracing/haystack",
-      "destination": "/integrations/tracing/haystack"
+      "destination": "/integrations/haystack-tracing"
     },
     {
       "source": "/integrations/development-frameworks/tracing/baml",
-      "destination": "/integrations/tracing/baml"
+      "destination": "/integrations/baml-tracing"
     },
     {
       "source": "/integrations/development-frameworks/tracing/instructor",
-      "destination": "/integrations/tracing/instructor"
+      "destination": "/integrations/instructor"
     },
     {
       "source": "/integrations/development-frameworks/mem0",
@@ -984,7 +996,7 @@
     },
     {
       "source": "/integrations/development-frameworks/baml",
-      "destination": "/integrations/tracing/baml"
+      "destination": "/integrations/baml-tracing"
     },
     {
       "source": "/integrations/others/posthog",
@@ -992,15 +1004,15 @@
     },
     {
       "source": "/integrations/development-frameworks/tracing/agno",
-      "destination": "/integrations/tracing/agno"
+      "destination": "/integrations/agno"
     },
     {
       "source": "/integrations/development-frameworks/tracing/braintrust",
-      "destination": "/integrations/tracing/braintrust"
+      "destination": "/integrations/braintrust"
     },
     {
       "source": "/integrations/development-frameworks/tracing/superagent",
-      "destination": "/integrations/tracing/superagent"
+      "destination": "/integrations/superagent"
     },
     {
       "source": "/documentation/resources/mcp",
@@ -1574,7 +1586,6 @@
       "source": "/documentation/security/security-qa",
       "destination": "/documentation/security/architecture_review"
     },
-
     {
       "source": "/get-started/overview",
       "destination": "/documentation/getting-started/overview"
@@ -1615,7 +1626,6 @@
       "source": "/get-started/:slug*",
       "destination": "/documentation/getting-started/:slug*"
     },
-
     {
       "source": "/documentation/products/logs/configuration/pass_keywordsai_parameters",
       "destination": "/documentation/features/tracing/logs/log-parameters"
@@ -1636,102 +1646,101 @@
       "source": "/documentation/support/feedback",
       "destination": "/documentation/support/support"
     },
-
     {
       "source": "/integration/overview",
       "destination": "/integrations/overview"
     },
     {
       "source": "/integration/development-frameworks/openai-agent",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integration/development-frameworks/openai-agents-sdk-js",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integration/development-frameworks/openai-sdk",
-      "destination": "/integrations/gateway/openai/openai-sdk"
+      "destination": "/integrations/openai-sdk"
     },
     {
       "source": "/integration/development-frameworks/tracing/openai-agents-sdk",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integration/development-frameworks/tracing/openai-agents-sdk-js",
-      "destination": "/integrations/tracing/openai-agents-sdk"
+      "destination": "/integrations/openai-agents-sdk"
     },
     {
       "source": "/integration/tracing/vercel-tracing",
-      "destination": "/integrations/tracing/vercel-tracing"
+      "destination": "/integrations/vercel-tracing"
     },
     {
       "source": "/integration/development-frameworks/tracing/mastra",
-      "destination": "/integrations/tracing/mastra"
+      "destination": "/integrations/mastra"
     },
     {
       "source": "/integration/development-frameworks/tracing/langgraph",
-      "destination": "/integrations/tracing/langgraph"
+      "destination": "/integrations/langgraph"
     },
     {
       "source": "/integration/development-frameworks/tracing/agno",
-      "destination": "/integrations/tracing/agno"
+      "destination": "/integrations/agno"
     },
     {
       "source": "/integration/development-frameworks/tracing/langfuse",
-      "destination": "/integrations/tracing/langfuse"
+      "destination": "/integrations/langfuse"
     },
     {
       "source": "/integration/development-frameworks/tracing/braintrust",
-      "destination": "/integrations/tracing/braintrust"
+      "destination": "/integrations/braintrust"
     },
     {
       "source": "/integration/development-frameworks/tracing/haystack",
-      "destination": "/integrations/tracing/haystack"
+      "destination": "/integrations/haystack-tracing"
     },
     {
       "source": "/integration/development-frameworks/tracing/baml",
-      "destination": "/integrations/tracing/baml"
+      "destination": "/integrations/baml-tracing"
     },
     {
       "source": "/integration/development-frameworks/tracing/instructor",
-      "destination": "/integrations/tracing/instructor"
+      "destination": "/integrations/instructor"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/openai/openai-sdk",
-      "destination": "/integrations/gateway/openai/openai-sdk"
+      "destination": "/integrations/openai-sdk"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/openai/openai-responses",
-      "destination": "/integrations/gateway/openai/openai-sdk#responses-api"
+      "destination": "/integrations/openai-sdk#responses-api"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/anthropic",
-      "destination": "/integrations/gateway/anthropic"
+      "destination": "/integrations/anthropic"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/langchain",
-      "destination": "/integrations/gateway/langchain"
+      "destination": "/integrations/langchain"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/litellm",
-      "destination": "/integrations/gateway/litellm"
+      "destination": "/integrations/litellm"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/haystack",
-      "destination": "/integrations/tracing/haystack"
+      "destination": "/integrations/haystack-tracing"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/vercel",
-      "destination": "/integrations/tracing/vercel-tracing"
+      "destination": "/integrations/vercel-tracing"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/llama-index",
-      "destination": "/integrations/gateway/llama-index"
+      "destination": "/integrations/llama-index"
     },
     {
       "source": "/integration/development-frameworks/llm_framework/google_genai",
-      "destination": "/integrations/gateway/google_genai"
+      "destination": "/integrations/google_genai"
     },
     {
       "source": "/integration/development-frameworks/mem0",
@@ -1739,7 +1748,7 @@
     },
     {
       "source": "/integration/development-frameworks/baml",
-      "destination": "/integrations/tracing/baml"
+      "destination": "/integrations/baml-tracing"
     },
     {
       "source": "/integration/others/cognee",
@@ -1769,7 +1778,6 @@
       "source": "/integration/:slug*",
       "destination": "/integrations/:slug*"
     },
-
     {
       "source": "/api-endpoints/observe/logs/update-single-log-endpoint",
       "destination": "/apis/observe/logs/request-logging-endpoint"
@@ -1790,7 +1798,6 @@
       "source": "/api-endpoints/:slug*",
       "destination": "/apis/:slug*"
     },
-
     {
       "source": "/tracing-sdk/contexts/keywordsai-span-attributes",
       "destination": "/sdks/python/tracing/contexts/respan-span-attributes"
@@ -1799,7 +1806,6 @@
       "source": "/tracing-sdk/:slug*",
       "destination": "/sdks/python/tracing/:slug*"
     },
-
     {
       "source": "/tracing-sdk-js/configuration/keywordsai-params",
       "destination": "/sdks/typescript/tracing/configuration/respan-params"
@@ -1808,7 +1814,6 @@
       "source": "/tracing-sdk-js/:slug*",
       "destination": "/sdks/typescript/tracing/:slug*"
     },
-
     {
       "source": "/python-sdk/quickstart",
       "destination": "/sdks/python/tracing/quickstart"
@@ -1929,7 +1934,6 @@
       "source": "/python-sdk/:slug*",
       "destination": "/sdks/python/tracing/:slug*"
     },
-
     {
       "source": "/sdks/python-tracing/quickstart",
       "destination": "/sdks/python/tracing/quickstart"
@@ -2005,6 +2009,170 @@
     {
       "source": "/sdks/exporters/vercel",
       "destination": "/sdks/typescript/exporters/vercel"
+    },
+    {
+      "source": "/integrations/gateway/anthropic",
+      "destination": "/integrations/anthropic"
+    },
+    {
+      "source": "/integrations/gateway/anthropic-agents-sdk",
+      "destination": "/integrations/anthropic-agents-sdk-gateway"
+    },
+    {
+      "source": "/integrations/gateway/baml",
+      "destination": "/integrations/baml-gateway"
+    },
+    {
+      "source": "/integrations/gateway/google_genai",
+      "destination": "/integrations/google_genai"
+    },
+    {
+      "source": "/integrations/gateway/haystack",
+      "destination": "/integrations/haystack-gateway"
+    },
+    {
+      "source": "/integrations/gateway/langchain",
+      "destination": "/integrations/langchain"
+    },
+    {
+      "source": "/integrations/gateway/litellm",
+      "destination": "/integrations/litellm"
+    },
+    {
+      "source": "/integrations/gateway/llama-index",
+      "destination": "/integrations/llama-index"
+    },
+    {
+      "source": "/integrations/gateway/openai-agents-sdk",
+      "destination": "/integrations/openai-agents-sdk"
+    },
+    {
+      "source": "/integrations/gateway/openai/openai-sdk",
+      "destination": "/integrations/openai-sdk"
+    },
+    {
+      "source": "/integrations/gateway/openai/openai-responses",
+      "destination": "/integrations/openai-sdk"
+    },
+    {
+      "source": "/integrations/gateway/pydantic",
+      "destination": "/integrations/pydantic-gateway"
+    },
+    {
+      "source": "/integrations/gateway/respan-api",
+      "destination": "/integrations/openai-sdk"
+    },
+    {
+      "source": "/integrations/gateway/ruby_llm",
+      "destination": "/integrations/ruby_llm"
+    },
+    {
+      "source": "/integrations/gateway/vercel",
+      "destination": "/integrations/vercel-gateway"
+    },
+    {
+      "source": "/integrations/tracing/agno",
+      "destination": "/integrations/agno"
+    },
+    {
+      "source": "/integrations/tracing/anthropic-agents-sdk",
+      "destination": "/integrations/anthropic-agents-sdk-tracing"
+    },
+    {
+      "source": "/integrations/tracing/anthropic-agents-sdk-js",
+      "destination": "/integrations/anthropic-agents-sdk-tracing"
+    },
+    {
+      "source": "/integrations/tracing/baml",
+      "destination": "/integrations/baml-tracing"
+    },
+    {
+      "source": "/integrations/tracing/braintrust",
+      "destination": "/integrations/braintrust"
+    },
+    {
+      "source": "/integrations/tracing/chromadb",
+      "destination": "/integrations/chromadb"
+    },
+    {
+      "source": "/integrations/tracing/haystack",
+      "destination": "/integrations/haystack-tracing"
+    },
+    {
+      "source": "/integrations/tracing/instructor",
+      "destination": "/integrations/instructor"
+    },
+    {
+      "source": "/integrations/tracing/lancedb",
+      "destination": "/integrations/lancedb"
+    },
+    {
+      "source": "/integrations/tracing/langfuse",
+      "destination": "/integrations/langfuse"
+    },
+    {
+      "source": "/integrations/tracing/langgraph",
+      "destination": "/integrations/langgraph"
+    },
+    {
+      "source": "/integrations/tracing/litellm",
+      "destination": "/integrations/litellm"
+    },
+    {
+      "source": "/integrations/tracing/marqo",
+      "destination": "/integrations/marqo"
+    },
+    {
+      "source": "/integrations/tracing/mastra",
+      "destination": "/integrations/mastra"
+    },
+    {
+      "source": "/integrations/tracing/milvus",
+      "destination": "/integrations/milvus"
+    },
+    {
+      "source": "/integrations/tracing/openai-agents-sdk",
+      "destination": "/integrations/openai-agents-sdk"
+    },
+    {
+      "source": "/integrations/tracing/openai-agents-sdk-js",
+      "destination": "/integrations/openai-agents-sdk"
+    },
+    {
+      "source": "/integrations/tracing/opentelemetry",
+      "destination": "/integrations/openai-sdk"
+    },
+    {
+      "source": "/integrations/tracing/pinecone",
+      "destination": "/integrations/pinecone"
+    },
+    {
+      "source": "/integrations/tracing/pydantic",
+      "destination": "/integrations/pydantic-tracing"
+    },
+    {
+      "source": "/integrations/tracing/pydantic-ai",
+      "destination": "/integrations/pydantic-tracing"
+    },
+    {
+      "source": "/integrations/tracing/qdrant",
+      "destination": "/integrations/qdrant"
+    },
+    {
+      "source": "/integrations/tracing/respan-native",
+      "destination": "/integrations/openai-sdk"
+    },
+    {
+      "source": "/integrations/tracing/superagent",
+      "destination": "/integrations/superagent"
+    },
+    {
+      "source": "/integrations/tracing/vercel-tracing",
+      "destination": "/integrations/vercel-tracing"
+    },
+    {
+      "source": "/integrations/tracing/weaviate",
+      "destination": "/integrations/weaviate"
     }
   ]
 }

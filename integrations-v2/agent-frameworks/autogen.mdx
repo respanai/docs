@@ -1,0 +1,228 @@
+---
+title: "AutoGen"
+description: "Trace AutoGen workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is AutoGen?
+
+[AutoGen](https://github.com/microsoft/autogen) is a framework by Microsoft for building multi-agent conversational systems. Agents can collaborate, debate, and solve complex tasks through structured conversations.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install autogen-agentchat autogen-ext respan-ai openinference-instrumentation-autogen python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.autogen import AutogenInstrumentor
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import TextMentionTermination
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+# Initialize Respan with AutoGen instrumentation
+respan = Respan(instrumentations=[AutogenInstrumentor()])
+
+model_client = OpenAIChatCompletionClient(model="gpt-4.1-nano")
+
+assistant = AssistantAgent(
+    name="Assistant",
+    model_client=model_client,
+    system_message="You are a helpful assistant. Say TERMINATE when done.",
+)
+
+termination = TextMentionTermination("TERMINATE")
+team = RoundRobinGroupChat([assistant], termination_condition=termination)
+
+import asyncio
+
+async def main():
+    result = await team.run(task="What is the capital of France?")
+    print(result)
+    respan.flush()
+
+asyncio.run(main())
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your multi-agent conversation trace.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `AutogenInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.autogen import AutogenInstrumentor
+
+respan = Respan(
+    instrumentations=[AutogenInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "autogen-app", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.autogen import AutogenInstrumentor
+
+respan = Respan(instrumentations=[AutogenInstrumentor()])
+
+@workflow(name="handle_request")
+async def handle_request(user_id: str, task: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        result = await team.run(task=task)
+        print(result)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.autogen import AutogenInstrumentor
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import TextMentionTermination
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+respan = Respan(instrumentations=[AutogenInstrumentor()])
+
+model_client = OpenAIChatCompletionClient(model="gpt-4.1-nano")
+
+@task(name="run_discussion")
+async def run_discussion(topic: str) -> str:
+    agent_a = AssistantAgent(
+        name="Analyst",
+        model_client=model_client,
+        system_message="You analyze topics critically. Say TERMINATE when done.",
+    )
+    termination = TextMentionTermination("TERMINATE")
+    team = RoundRobinGroupChat([agent_a], termination_condition=termination)
+    result = await team.run(task=topic)
+    return str(result)
+
+@workflow(name="analysis_pipeline")
+async def pipeline(topic: str):
+    findings = await run_discussion(topic)
+    print(findings)
+
+import asyncio
+asyncio.run(pipeline("Benefits of LLM observability"))
+respan.flush()
+```
+
+## Examples
+
+### Basic conversation between agents
+
+```python
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import TextMentionTermination
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+model_client = OpenAIChatCompletionClient(model="gpt-4.1-nano")
+
+researcher = AssistantAgent(
+    name="Researcher",
+    model_client=model_client,
+    system_message="You research topics and provide facts. Say TERMINATE when done.",
+)
+
+critic = AssistantAgent(
+    name="Critic",
+    model_client=model_client,
+    system_message="You critique research findings and ask probing questions. Say TERMINATE when satisfied.",
+)
+
+termination = TextMentionTermination("TERMINATE")
+team = RoundRobinGroupChat(
+    [researcher, critic],
+    termination_condition=termination,
+)
+
+import asyncio
+
+async def main():
+    result = await team.run(task="What are the main benefits of API gateways?")
+    print(result)
+
+asyncio.run(main())
+```

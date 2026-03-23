@@ -1,0 +1,104 @@
+---
+title: "Instrumentation()"
+description: "Build custom instrumentation plugins for Respan."
+---
+
+## Overview
+
+All Respan instrumentation plugins implement a simple protocol with `name`, `activate()`, and `deactivate()`. This lets you build plugins for any vendor SDK and have them work with `Respan()`.
+
+## Protocol
+
+```python
+from respan import Instrumentation
+
+class Instrumentation(Protocol):
+    name: str
+
+    def activate(self) -> None:
+        """Start intercepting spans and injecting them into the OTEL pipeline."""
+        ...
+
+    def deactivate(self) -> None:
+        """Stop intercepting spans and clean up resources."""
+        ...
+```
+
+| Attribute/Method | Description |
+|------------------|-------------|
+| `name` | Unique identifier for the plugin (e.g. `"openai-agents"`, `"openai"`). |
+| `activate()` | Called by `Respan.__init__()`. Registers hooks/processors with the vendor SDK. |
+| `deactivate()` | Called by `Respan.shutdown()`. Cleans up hooks/processors. |
+
+## Building a custom plugin
+
+A plugin typically:
+1. Registers a hook or processor with the vendor SDK in `activate()`.
+2. On each SDK event, converts it to a `ReadableSpan` using `build_readable_span()`.
+3. Injects the span into the OTEL pipeline using `inject_span()`.
+
+### Minimal example
+
+```python
+from respan import Respan
+from respan_tracing.utils.span_factory import build_readable_span, inject_span
+
+class MySDKInstrumentor:
+    name = "my-sdk"
+
+    def activate(self) -> None:
+        # Register a callback with the vendor SDK
+        import my_sdk
+        my_sdk.on_completion(self._on_completion)
+
+    def deactivate(self) -> None:
+        import my_sdk
+        my_sdk.remove_callback(self._on_completion)
+
+    def _on_completion(self, event):
+        span = build_readable_span(
+            name=f"my-sdk.completion",
+            trace_id=event.trace_id,
+            attributes={
+                "llm.request.type": "chat",
+                "gen_ai.request.model": event.model,
+                "gen_ai.usage.prompt_tokens": event.input_tokens,
+                "gen_ai.usage.completion_tokens": event.output_tokens,
+                "traceloop.span.kind": "task",
+                "traceloop.entity.name": "completion",
+            },
+        )
+        inject_span(span)
+
+# Use it
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[MySDKInstrumentor()],
+)
+```
+
+### Key functions
+
+| Function | Module | Description |
+|----------|--------|-------------|
+| `build_readable_span()` | `respan_tracing.utils.span_factory` | Creates a `ReadableSpan` with proper trace/span IDs, timestamps, and attributes. Automatically reads propagated attributes from the current context. |
+| `inject_span()` | `respan_tracing.utils.span_factory` | Injects a `ReadableSpan` into the global OTEL processor chain for export. |
+| `read_propagated_attributes()` | `respan_tracing.utils.span_factory` | Reads the current `propagate_attributes()` context. Useful if you need to inspect attributes before building the span. |
+
+### Required attributes
+
+For spans to be processed and displayed correctly by the Respan backend:
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `traceloop.span.kind` | Yes | One of `"workflow"`, `"agent"`, `"task"`, `"tool"`. |
+| `traceloop.entity.name` | Yes | Human-readable span name. |
+| `llm.request.type` | For LLM spans | Set to `"chat"` to trigger prompt/completion parsing. |
+| `gen_ai.request.model` | For LLM spans | Model name. |
+
+## Existing plugins
+
+| Plugin | Package | SDK |
+|--------|---------|-----|
+| [OpenAI Agents SDK](/sdks/python/instruments/openai-agents) | `respan-instrumentation-openai-agents` | `openai-agents` |
+| [OpenAI](/sdks/python/instruments/openai) | `respan-instrumentation-openai` | `openai` |

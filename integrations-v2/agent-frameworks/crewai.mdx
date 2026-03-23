@@ -1,0 +1,285 @@
+---
+title: "CrewAI"
+description: "Trace CrewAI workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is CrewAI?
+
+[CrewAI](https://github.com/crewAIInc/crewAI) is a framework for orchestrating role-playing AI agents. It lets you define agents with specific roles, goals, and backstories, then compose them into crews that collaborate on tasks.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install crewai respan-ai openinference-instrumentation-crewai python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install crewai respan-ai opentelemetry-instrumentation-crewai python-dotenv
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.crewai import CrewAIInstrumentor
+from crewai import Agent, Task, Crew
+
+# Initialize Respan with CrewAI instrumentation
+respan = Respan(instrumentations=[CrewAIInstrumentor()])
+
+researcher = Agent(
+    role="Researcher",
+    goal="Find accurate information about the topic",
+    backstory="You are an expert researcher with deep knowledge.",
+)
+
+research_task = Task(
+    description="Research the benefits of LLM observability.",
+    expected_output="A brief summary of LLM observability benefits.",
+    agent=researcher,
+)
+
+crew = Crew(agents=[researcher], tasks=[research_task])
+result = crew.kickoff()
+print(result)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from crewai import Agent, Task, Crew
+
+# Auto-discover installed OpenTelemetry instrumentors
+respan = Respan(is_auto_instrument=True)
+
+researcher = Agent(
+    role="Researcher",
+    goal="Find accurate information about the topic",
+    backstory="You are an expert researcher with deep knowledge.",
+)
+
+research_task = Task(
+    description="Research the benefits of LLM observability.",
+    expected_output="A brief summary of LLM observability benefits.",
+    agent=researcher,
+)
+
+crew = Crew(agents=[researcher], tasks=[research_task])
+result = crew.kickoff()
+print(result)
+respan.flush()
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your crew execution with individual agent and task spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `CrewAIInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.crewai import CrewAIInstrumentor
+
+respan = Respan(
+    instrumentations=[CrewAIInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "crewai-app", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.crewai import CrewAIInstrumentor
+
+respan = Respan(instrumentations=[CrewAIInstrumentor()])
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, topic: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        result = crew.kickoff()
+        print(result)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.crewai import CrewAIInstrumentor
+from crewai import Agent, Task, Crew
+
+respan = Respan(instrumentations=[CrewAIInstrumentor()])
+
+@task(name="run_research_crew")
+def run_research(topic: str) -> str:
+    researcher = Agent(
+        role="Researcher",
+        goal=f"Research {topic} thoroughly",
+        backstory="You are an expert researcher.",
+    )
+    research_task = Task(
+        description=f"Research {topic} and provide key findings.",
+        expected_output="A summary of findings.",
+        agent=researcher,
+    )
+    crew = Crew(agents=[researcher], tasks=[research_task])
+    return str(crew.kickoff())
+
+@workflow(name="research_pipeline")
+def pipeline(topic: str):
+    findings = run_research(topic)
+    print(findings)
+
+pipeline("LLM observability best practices")
+respan.flush()
+```
+
+## Examples
+
+### Basic crew
+
+```python
+from crewai import Agent, Task, Crew
+
+researcher = Agent(
+    role="Researcher",
+    goal="Find accurate information",
+    backstory="You are an expert researcher.",
+)
+
+task = Task(
+    description="Explain what API gateways are and their benefits.",
+    expected_output="A clear explanation of API gateways.",
+    agent=researcher,
+)
+
+crew = Crew(agents=[researcher], tasks=[task])
+result = crew.kickoff()
+print(result)
+```
+
+### Agents with tasks
+
+```python
+from crewai import Agent, Task, Crew
+
+researcher = Agent(
+    role="Researcher",
+    goal="Find key facts about a topic",
+    backstory="You are a meticulous researcher.",
+)
+
+writer = Agent(
+    role="Writer",
+    goal="Write clear and engaging content",
+    backstory="You are a skilled technical writer.",
+)
+
+research_task = Task(
+    description="Research the topic of LLM tracing and observability.",
+    expected_output="A list of key points about LLM tracing.",
+    agent=researcher,
+)
+
+writing_task = Task(
+    description="Write a blog post based on the research findings.",
+    expected_output="A short blog post about LLM tracing.",
+    agent=writer,
+)
+
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, writing_task],
+)
+result = crew.kickoff()
+print(result)
+```

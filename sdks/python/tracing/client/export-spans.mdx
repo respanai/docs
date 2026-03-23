@@ -14,9 +14,9 @@ Processes spans through the configured processor pipeline (including the default
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, get_client
+from respan import Respan, get_client
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 client = get_client()
 
 # Collect spans with a buffer

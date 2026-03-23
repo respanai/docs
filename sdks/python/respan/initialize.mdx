@@ -1,0 +1,145 @@
+---
+title: "Respan()"
+description: "Initialize Respan with API key, plugins, and default attributes."
+---
+
+## Constructor
+
+```python
+from respan import Respan
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[...],
+)
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Respan API key. Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | API base URL. Falls back to `RESPAN_BASE_URL`, then `https://api.respan.ai/api`. |
+| `app_name` | `str` | `"respan"` | Application name for telemetry identification. |
+| `instrumentations` | `list \| None` | `None` | List of instrumentor instances to activate. |
+| `auto_instrument` | `bool \| None` | `None` | Auto-instrument LLM SDKs via OTEL. Defaults to `False`. Set `True` to enable alongside plugins. |
+| `customer_identifier` | `str \| None` | `None` | Default customer/user ID attached to all spans. |
+| `thread_identifier` | `str \| None` | `None` | Default conversation thread ID for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata dict merged into all spans. |
+| `environment` | `str \| None` | `None` | Environment name (e.g. `"production"`, `"staging"`). |
+| `**telemetry_kwargs` | | | Extra kwargs forwarded to `RespanTelemetry` (e.g. `log_level`, `is_batching_enabled`). |
+
+## Environment variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RESPAN_API_KEY` | Respan API key | — |
+| `RESPAN_BASE_URL` | API base URL | `https://api.respan.ai/api` |
+| `RESPAN_LOG_LEVEL` | SDK log level | `INFO` |
+| `RESPAN_BATCHING_ENABLED` | Enable batch processing | `true` |
+
+Constructor parameters take precedence over environment variables.
+
+## Examples
+
+### With OpenAI Agents SDK
+
+```python
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+)
+```
+
+### With OpenAI SDK
+
+```python
+from respan import Respan
+from respan_instrumentation_openai import OpenAIInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIInstrumentor()],
+)
+```
+
+### With multiple plugins
+
+```python
+from respan import Respan
+from respan_instrumentation_openai import OpenAIInstrumentor
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[
+        OpenAIInstrumentor(),
+        OpenAIAgentsInstrumentor(),
+    ],
+)
+```
+
+### With default attributes
+
+Attributes set on the constructor are attached to **all** spans for the lifetime of the instance:
+
+```python
+respan = Respan(
+    api_key="your-api-key",
+    instrumentations=[OpenAIAgentsInstrumentor()],
+    customer_identifier="user_123",
+    thread_identifier="conv_abc",
+    metadata={"plan": "pro", "region": "us-east"},
+    environment="production",
+)
+```
+
+For per-request attributes, use [`propagate_attributes()`](/sdks/python/respan/propagate-attributes) instead.
+
+### Minimal setup with env vars
+
+```python
+import os
+os.environ["RESPAN_API_KEY"] = "your-api-key"
+
+from respan import Respan
+from respan_instrumentation_openai_agents import OpenAIAgentsInstrumentor
+
+respan = Respan(instrumentations=[OpenAIAgentsInstrumentor()])
+```
+
+### No plugins (decorators only)
+
+```python
+from respan import Respan, workflow, task
+
+respan = Respan(api_key="your-api-key")
+
+@task(name="generate")
+def generate(topic: str):
+    # LLM call here
+    pass
+
+@workflow(name="my_workflow")
+def my_workflow():
+    return generate("tracing")
+```
+
+## flush()
+
+Force flush all pending spans to exporters. Call before process exit or in serverless environments.
+
+```python
+respan.flush()
+```
+
+## shutdown()
+
+Deactivate all plugins and shut down the OTEL pipeline.
+
+```python
+respan.shutdown()
+```

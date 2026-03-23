@@ -8,15 +8,15 @@ description: "Get the RespanClient for span and trace operations."
 `get_client()` returns a `RespanClient` instance bound to the singleton tracer. Use it inside decorated functions to read trace/span IDs, update the current span, add events, record exceptions, and control export.
 
 ```python
-from respan_tracing import get_client
+from respan import get_client
 ```
 
 ## Usage
 
 ```python
-from respan_tracing import RespanTelemetry, get_client, workflow
+from respan import Respan, get_client, workflow
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="my_workflow")
 def my_workflow():

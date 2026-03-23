@@ -1,0 +1,237 @@
+---
+title: "Haystack"
+description: "Trace Haystack workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Haystack?
+
+[Haystack](https://github.com/deepset-ai/haystack) is an end-to-end Python framework by deepset for building NLP and LLM pipelines. It provides composable components for retrieval, generation, and processing.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install haystack-ai respan-ai openinference-instrumentation-haystack python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install haystack-ai respan-ai opentelemetry-instrumentation-haystack python-dotenv
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.haystack import HaystackInstrumentor
+from haystack import Pipeline
+from haystack.components.generators import OpenAIGenerator
+
+# Initialize Respan with Haystack instrumentation
+respan = Respan(instrumentations=[HaystackInstrumentor()])
+
+pipeline = Pipeline()
+pipeline.add_component("llm", OpenAIGenerator(model="gpt-4.1-nano"))
+
+result = pipeline.run({"llm": {"prompt": "Explain LLM observability in one sentence."}})
+print(result["llm"]["replies"][0])
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from haystack import Pipeline
+from haystack.components.generators import OpenAIGenerator
+
+# Auto-discover installed OpenTelemetry instrumentors
+respan = Respan(is_auto_instrument=True)
+
+pipeline = Pipeline()
+pipeline.add_component("llm", OpenAIGenerator(model="gpt-4.1-nano"))
+
+result = pipeline.run({"llm": {"prompt": "Explain LLM observability in one sentence."}})
+print(result["llm"]["replies"][0])
+respan.flush()
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your pipeline trace with individual component spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `HaystackInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.haystack import HaystackInstrumentor
+
+respan = Respan(
+    instrumentations=[HaystackInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "haystack-app", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.haystack import HaystackInstrumentor
+
+respan = Respan(instrumentations=[HaystackInstrumentor()])
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        result = pipeline.run({"llm": {"prompt": question}})
+        print(result["llm"]["replies"][0])
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.haystack import HaystackInstrumentor
+from haystack import Pipeline
+from haystack.components.generators import OpenAIGenerator
+
+respan = Respan(instrumentations=[HaystackInstrumentor()])
+
+@task(name="generate_response")
+def generate(prompt: str) -> str:
+    pipeline = Pipeline()
+    pipeline.add_component("llm", OpenAIGenerator(model="gpt-4.1-nano"))
+    result = pipeline.run({"llm": {"prompt": prompt}})
+    return result["llm"]["replies"][0]
+
+@workflow(name="qa_pipeline")
+def qa(question: str):
+    answer = generate(question)
+    print(answer)
+
+qa("What are the benefits of LLM observability?")
+respan.flush()
+```
+
+## Examples
+
+### Basic pipeline
+
+```python
+from haystack import Pipeline
+from haystack.components.generators import OpenAIGenerator
+from haystack.components.builders import PromptBuilder
+
+template = """Answer the question based on your knowledge.
+Question: {{question}}
+Answer:"""
+
+pipeline = Pipeline()
+pipeline.add_component("prompt", PromptBuilder(template=template))
+pipeline.add_component("llm", OpenAIGenerator(model="gpt-4.1-nano"))
+pipeline.connect("prompt", "llm")
+
+result = pipeline.run({"prompt": {"question": "What is the capital of France?"}})
+print(result["llm"]["replies"][0])
+```
+
+## Gateway
+
+You can route LLM calls through the Respan gateway by configuring the OpenAI generator:
+
+```python
+from haystack.components.generators import OpenAIGenerator
+
+generator = OpenAIGenerator(
+    model="gpt-4.1-nano",
+    api_key=os.getenv("RESPAN_API_KEY"),
+    api_base_url="https://api.respan.ai/api",
+)
+```
+
+With the gateway, no `OPENAI_API_KEY` is needed and you can switch models across providers.

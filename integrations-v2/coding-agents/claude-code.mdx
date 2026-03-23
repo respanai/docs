@@ -1,0 +1,128 @@
+---
+title: "Claude Code"
+description: "Trace Claude Code conversations with Respan — full observability into thinking, tool calls, and agent workflows."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Claude Code?
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code) is Anthropic's agentic coding tool that lives in your terminal. It can understand your codebase, edit files, run commands, and handle complex multi-step coding tasks using extended thinking and a rich set of built-in tools.
+
+## Setup
+
+<Note>
+**Prerequisite:** Claude Code must be installed before integrating with Respan.
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+</Note>
+
+<Steps>
+<Step title="Install the Respan CLI">
+
+```bash
+npm install -g @respan/cli
+```
+
+</Step>
+
+<Step title="Set your API key">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+</Step>
+
+<Step title="Integrate">
+
+```bash
+respan integrate claude-code
+```
+
+This automatically configures Claude Code's hooks to send traces to Respan.
+
+</Step>
+
+<Step title="Use Claude Code normally">
+
+```bash
+claude "Refactor the auth module to use JWT tokens"
+```
+
+All conversations are now traced automatically — no changes to your workflow.
+
+</Step>
+
+<Step title="View your traces">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Claude Code conversations with full hierarchy — thinking blocks, tool calls, and responses.
+
+</Step>
+</Steps>
+
+## Configuration
+
+Customize the integration with flags:
+
+```bash
+respan integrate claude-code --customer-id "frank" --project-id "proj-123" --span-name "my-app"
+```
+
+| Flag | Env var | Default | Description |
+|------|---------|---------|-------------|
+| `--global` | — | Both | Write user-level global config (`~/.claude/settings.json`). |
+| `--local` | — | Both | Write per-project config (`.claude/settings.local.json`). |
+| `--customer-id` | `RESPAN_CUSTOMER_ID` | — | Customer/user identifier for traces. |
+| `--project-id` | `RESPAN_PROJECT_ID` | — | Respan project ID. |
+| `--span-name` | — | `claude-code` | Root span name. |
+| `--workflow-name` | — | `claude-code` | Workflow name for traces. |
+| `--attrs` | — | — | Custom attributes JSON (e.g. `'{"env":"prod"}'`). |
+| `--base-url` | `RESPAN_BASE_URL` | `https://api.respan.ai/api` | Respan API base URL. |
+| `--dry-run` | — | — | Preview changes without writing files. |
+
+## Captured Data
+
+| Data | Description |
+|------|-------------|
+| **User prompt** | The user's input text |
+| **Assistant response** | Claude Code's final response |
+| **Thinking blocks** | Extended thinking / reasoning content |
+| **Tool calls** | Tool name, input, and output (Read, Write, Bash, Glob, Grep, etc.) |
+| **Token usage** | Input, output, and cache tokens |
+| **Timing** | Start time, end time, latency |
+| **Model** | Model name used (e.g. `claude-sonnet-4-20250514`, `claude-opus-4-20250514`) |
+
+## Span Types
+
+| Span | `log_type` | Description |
+|------|------------|-------------|
+| Root | `agent` | The complete conversation turn |
+| Thinking | `generation` | Extended thinking / reasoning blocks |
+| Tool | `tool` | Tool invocations (file reads, writes, shell commands, glob, grep, etc.) |
+
+## Uninstall
+
+To remove the integration:
+
+```bash
+respan integrate claude-code --remove
+```

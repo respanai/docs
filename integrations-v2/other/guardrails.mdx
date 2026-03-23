@@ -1,0 +1,224 @@
+---
+title: "Guardrails AI"
+description: "Trace Guardrails AI operations with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Guardrails AI?
+
+[Guardrails AI](https://github.com/guardrails-ai/guardrails) is a Python framework for adding validation and structure to LLM outputs. It lets you define guards with validators that check, fix, and re-prompt LLM responses to ensure they meet your requirements. The Respan integration uses the OpenInference instrumentor to capture all guard validations and LLM calls as traced spans.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai openinference-instrumentation-guardrails guardrails-ai python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.guardrails import GuardrailsInstrumentor
+import guardrails as gd
+from guardrails.hub import RegexMatch
+from pydantic import BaseModel, Field
+
+# Initialize Respan with Guardrails instrumentation
+respan = Respan(instrumentations=[GuardrailsInstrumentor()])
+
+
+class PetInfo(BaseModel):
+    name: str = Field(description="The pet's name")
+    species: str = Field(
+        description="The species of the pet",
+        validators=[RegexMatch(regex="^(dog|cat|bird|fish)$")],
+    )
+    age: int = Field(description="The pet's age in years")
+
+
+guard = gd.Guard.from_pydantic(output_class=PetInfo)
+
+result = guard(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "user", "content": "Tell me about a golden retriever named Max who is 3 years old."}
+    ],
+)
+print(result.validated_output)
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your guard validations, LLM calls, and re-prompts as traced spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `GuardrailsInstrumentor()`). |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.guardrails import GuardrailsInstrumentor
+
+respan = Respan(
+    instrumentations=[GuardrailsInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "validation-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+from openinference.instrumentation.guardrails import GuardrailsInstrumentor
+
+respan = Respan(instrumentations=[GuardrailsInstrumentor()])
+
+def validate_user_input(user_id: str, text: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="session_001",
+        metadata={"plan": "enterprise"},
+    ):
+        result = guard(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": text}],
+        )
+        return result.validated_output
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Basic guard with validators
+
+Use built-in validators from the Guardrails Hub to constrain LLM outputs.
+
+```python
+from guardrails.hub import ValidLength, RegexMatch
+from pydantic import BaseModel, Field
+import guardrails as gd
+
+class MovieReview(BaseModel):
+    title: str = Field(description="Movie title")
+    rating: int = Field(description="Rating from 1 to 10")
+    summary: str = Field(
+        description="Brief summary of the review",
+        validators=[ValidLength(min=10, max=200)],
+    )
+    genre: str = Field(
+        description="Movie genre",
+        validators=[RegexMatch(regex="^(action|comedy|drama|horror|sci-fi)$")],
+    )
+
+guard = gd.Guard.from_pydantic(output_class=MovieReview)
+
+result = guard(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "user", "content": "Write a review for The Matrix."}
+    ],
+)
+print(result.validated_output)
+respan.flush()
+```
+
+### Structured output validation
+
+Combine Guardrails with structured Pydantic models for reliable data extraction.
+
+```python
+from pydantic import BaseModel, Field
+from typing import List
+import guardrails as gd
+
+class Address(BaseModel):
+    street: str = Field(description="Street address")
+    city: str = Field(description="City name")
+    state: str = Field(description="State abbreviation")
+    zip_code: str = Field(description="ZIP code")
+
+class Contact(BaseModel):
+    name: str = Field(description="Full name")
+    email: str = Field(description="Email address")
+    addresses: List[Address] = Field(description="List of addresses")
+
+guard = gd.Guard.from_pydantic(output_class=Contact)
+
+result = guard(
+    model="gpt-4o-mini",
+    messages=[
+        {
+            "role": "user",
+            "content": "Extract contact info: John Smith, john@example.com, "
+            "lives at 123 Main St, Springfield IL 62701 and "
+            "456 Oak Ave, Chicago IL 60601",
+        }
+    ],
+)
+print(result.validated_output)
+respan.flush()
+```

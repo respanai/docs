@@ -1,0 +1,262 @@
+---
+title: "LlamaIndex"
+description: "Trace LlamaIndex workflows with Respan — auto-instrumented spans and full observability."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is LlamaIndex?
+
+[LlamaIndex](https://github.com/run-llama/llama_index) is a data framework for building LLM applications with data connectors, indices, and query engines. Respan captures every query, retrieval step, and LLM call as spans in a trace.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```bash
+pip install llama-index respan-ai openinference-instrumentation-llama-index python-dotenv
+```
+</Tab>
+<Tab title="Traceloop">
+```bash
+pip install llama-index respan-ai opentelemetry-instrumentation-llamaindex python-dotenv
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Initialize and run">
+
+<Tabs>
+<Tab title="OpenInference (Recommended)">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from llama_index.core import VectorStoreIndex, Document
+
+# Initialize Respan with LlamaIndex instrumentation
+respan = Respan(instrumentations=[LlamaIndexInstrumentor()])
+
+# Create a simple index from documents
+documents = [
+    Document(text="Respan is an LLM engineering platform for observability."),
+    Document(text="LlamaIndex helps you build RAG applications."),
+]
+index = VectorStoreIndex.from_documents(documents)
+
+# Query the index
+query_engine = index.as_query_engine()
+response = query_engine.query("What is Respan?")
+print(response)
+respan.flush()
+```
+</Tab>
+<Tab title="Traceloop">
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from respan import Respan
+from llama_index.core import VectorStoreIndex, Document
+
+# Auto-discover installed OpenTelemetry instrumentors
+respan = Respan(is_auto_instrument=True)
+
+documents = [
+    Document(text="Respan is an LLM engineering platform for observability."),
+    Document(text="LlamaIndex helps you build RAG applications."),
+]
+index = VectorStoreIndex.from_documents(documents)
+
+query_engine = index.as_query_engine()
+response = query_engine.query("What is Respan?")
+print(response)
+respan.flush()
+```
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your query execution with retrieval and LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `instrumentations` | `list` | `[]` | Plugin instrumentations to activate (e.g. `LlamaIndexInstrumentor()`). |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+
+respan = Respan(
+    instrumentations=[LlamaIndexInstrumentor()],
+    customer_identifier="user_123",
+    metadata={"service": "rag-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, workflow, propagate_attributes
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+
+respan = Respan(instrumentations=[LlamaIndexInstrumentor()])
+
+@workflow(name="handle_query")
+def handle_query(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = query_engine.query(question)
+        print(response)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+from respan import Respan, workflow, task
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from llama_index.core import VectorStoreIndex, Document
+
+respan = Respan(instrumentations=[LlamaIndexInstrumentor()])
+
+@task(name="build_index")
+def build_index(texts: list[str]):
+    documents = [Document(text=t) for t in texts]
+    return VectorStoreIndex.from_documents(documents)
+
+@task(name="query_index")
+def query_index(index, question: str) -> str:
+    engine = index.as_query_engine()
+    return str(engine.query(question))
+
+@workflow(name="rag_pipeline")
+def pipeline(texts: list[str], question: str):
+    index = build_index(texts)
+    answer = query_index(index, question)
+    print(answer)
+
+pipeline(
+    texts=["Respan provides LLM observability.", "LlamaIndex enables RAG."],
+    question="What does Respan do?",
+)
+respan.flush()
+```
+
+## Examples
+
+### Basic query
+
+```python
+from llama_index.core import VectorStoreIndex, Document
+
+documents = [
+    Document(text="The capital of France is Paris."),
+    Document(text="The capital of Germany is Berlin."),
+]
+index = VectorStoreIndex.from_documents(documents)
+engine = index.as_query_engine()
+
+response = engine.query("What is the capital of France?")
+print(response)
+```
+
+### Index and query
+
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
+# Load documents from a directory
+documents = SimpleDirectoryReader("./data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+
+# Query with similarity search
+engine = index.as_query_engine(similarity_top_k=3)
+response = engine.query("Summarize the key points in these documents.")
+print(response)
+```
+
+## Gateway
+
+You can route LLM calls through the Respan gateway by configuring the OpenAI LLM:
+
+```python
+from llama_index.llms.openai import OpenAI
+
+llm = OpenAI(
+    model="gpt-4.1-nano",
+    api_key=os.getenv("RESPAN_API_KEY"),
+    api_base="https://api.respan.ai/api",
+)
+```
+
+Use the gateway-configured LLM when building your index or query engine.

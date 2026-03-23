@@ -40,10 +40,10 @@ Returns `True` if the span was updated successfully, `False` otherwise.
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, get_client
+from respan import Respan, workflow, get_client
 from opentelemetry.trace import StatusCode
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="process")
 def process(user_id: str):

@@ -14,9 +14,9 @@ Returns a `SpanBuffer` context manager that routes all spans created within it i
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, get_client
+from respan import Respan, get_client
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 client = get_client()
 
 # Collect spans into a buffer

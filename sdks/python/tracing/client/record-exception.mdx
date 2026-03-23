@@ -28,9 +28,9 @@ Returns `True` if the exception was recorded successfully.
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, task, get_client
+from respan import Respan, task, get_client
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @task(name="validate_input")
 def validate_input(data):

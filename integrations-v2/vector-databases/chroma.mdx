@@ -1,0 +1,237 @@
+---
+title: "Chroma"
+description: "Trace Chroma operations with Respan — auto-instrumented spans for vector search and indexing."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Chroma?
+
+[Chroma](https://github.com/chroma-core/chroma) is an open-source embedding database designed for AI applications, with built-in document storage and automatic embedding generation. Respan auto-instruments Chroma operations so every add, query, and collection operation is captured as a traced span.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-chromadb chromadb python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+Chroma runs locally by default, so no additional credentials are needed.
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import chromadb
+from respan import Respan
+
+# Initialize Respan with auto-instrumentation
+respan = Respan(is_auto_instrument=True)
+
+# Create a Chroma client (in-memory by default)
+client = chromadb.Client()
+
+# Create a collection
+collection = client.create_collection(name="respan-demo")
+
+# Add documents (Chroma auto-generates embeddings)
+collection.add(
+    ids=["doc_1", "doc_2", "doc_3"],
+    documents=[
+        "The quick brown fox jumps over the lazy dog.",
+        "Machine learning models require large datasets.",
+        "Vector databases enable similarity search at scale.",
+    ],
+    metadatas=[
+        {"source": "literature"},
+        {"source": "textbook"},
+        {"source": "documentation"},
+    ],
+)
+
+# Query
+results = collection.query(
+    query_texts=["How do vector databases work?"],
+    n_results=2,
+)
+print(results)
+
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your Chroma spans including collection creation, add, and query operations.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover installed instrumentors. Required for Traceloop instrumentors. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization -- these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "search-api", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+from respan import Respan, propagate_attributes
+
+respan = Respan(is_auto_instrument=True)
+
+with propagate_attributes(
+    customer_identifier="user_456",
+    thread_identifier="session_abc",
+    metadata={"plan": "enterprise"},
+):
+    results = collection.query(
+        query_texts=["semantic search techniques"],
+        n_results=5,
+    )
+    print(results)
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Examples
+
+### Create collection
+
+```python
+import chromadb
+
+client = chromadb.Client()
+
+# Create with default embedding function
+collection = client.create_collection(name="articles")
+
+# Or with persistent storage
+client = chromadb.PersistentClient(path="./chroma_data")
+collection = client.create_collection(name="articles")
+```
+
+### Add documents
+
+```python
+# Add with auto-generated embeddings
+collection.add(
+    ids=["article_001", "article_002", "article_003"],
+    documents=[
+        "Introduction to neural networks and deep learning.",
+        "Best practices for building REST APIs.",
+        "Understanding vector similarity search algorithms.",
+    ],
+    metadatas=[
+        {"topic": "ml", "author": "Alice"},
+        {"topic": "engineering", "author": "Bob"},
+        {"topic": "databases", "author": "Charlie"},
+    ],
+)
+
+# Add with pre-computed embeddings (1536-dim)
+collection.add(
+    ids=["vec_001", "vec_002"],
+    embeddings=[
+        [0.12, 0.34, 0.56] + [0.0] * 1533,
+        [0.78, 0.91, 0.23] + [0.0] * 1533,
+    ],
+    metadatas=[
+        {"category": "electronics"},
+        {"category": "clothing"},
+    ],
+)
+```
+
+### Query
+
+```python
+# Query by text
+results = collection.query(
+    query_texts=["How do neural networks learn?"],
+    n_results=3,
+    where={"topic": "ml"},
+)
+
+for doc, distance in zip(results["documents"][0], results["distances"][0]):
+    print(f"distance={distance:.4f}: {doc[:80]}...")
+
+# Query by embedding
+results = collection.query(
+    query_embeddings=[[0.12, 0.34, 0.56] + [0.0] * 1533],
+    n_results=5,
+)
+```
+
+### Delete
+
+```python
+# Delete by IDs
+collection.delete(ids=["article_001", "article_002"])
+
+# Delete by filter
+collection.delete(where={"topic": "ml"})
+```

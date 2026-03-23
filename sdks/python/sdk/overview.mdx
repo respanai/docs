@@ -1,0 +1,300 @@
+---
+title: "respan-sdk"
+description: "Core types, constants, and utilities shared by all Respan Python packages."
+---
+
+## Overview
+
+`respan-sdk` is the foundational package that defines the shared vocabulary for the entire Respan Python ecosystem. It provides Pydantic types for log/span data, constant definitions for OTLP attributes and log types, filter types, and utility functions.
+
+```bash
+pip install respan-sdk
+```
+
+**Version:** 2.5.0 | **Python:** `>3.9, <4.0`
+
+<Note>
+You typically do not install `respan-sdk` directly. It is installed automatically as a dependency of `respan-tracing` and `respan-ai`.
+</Note>
+
+## Package structure
+
+```
+respan_sdk/
+  __init__.py            # Public exports
+  respan_types/          # Pydantic models
+    base_types.py        # RespanBaseModel
+    log_types.py         # RespanLogParams, RespanFullLogParams
+    param_types.py       # RespanParams, Customer, PromptParam, etc.
+    filter_types.py      # FilterParamDict, MetricFilterParam, FilterBundle
+    span_types.py        # RespanSpanAttributes enum, attribute maps
+    ...
+  constants/             # Shared constant definitions
+    llm_logging.py       # LOG_TYPE_*, LogType, LogTypeChoices
+    otlp_constants.py    # OTLP wire-format keys
+    tracing_constants.py # Ingest endpoint, headers
+  utils/                 # Serialization, preprocessing, retry
+```
+
+## Public exports
+
+```python
+from respan_sdk import (
+    # Types
+    RespanLogParams,
+    RespanFullLogParams,
+    RespanTextLogParams,    # Deprecated
+    RespanParams,           # Deprecated (use RespanLogParams)
+    EvaluationParams,
+    RetryParams,
+    Message,
+    Usage,
+
+    # Filter types
+    FilterParamDict,
+    MetricFilterParam,
+    FilterBundle,
+    MetricFilterValueType,
+
+    # Utilities
+    validate_and_separate_params,
+    validate_and_separate_log_and_llm_params,
+)
+```
+
+## Types
+
+### RespanLogParams
+
+The primary type for structuring LLM call data. This is the "contract" between integrations and the Respan backend.
+
+```python
+from respan_sdk import RespanLogParams
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | `str` | LLM model name (e.g. `"gpt-4o"`, `"claude-sonnet-4-5-20250929"`). |
+| `prompt_messages` | `list[Message]` | Input messages sent to the LLM. |
+| `completion_message` | `Message` | The LLM's response message. |
+| `prompt_tokens` | `int \| None` | Input token count. |
+| `completion_tokens` | `int \| None` | Output token count. |
+| `cost` | `float \| None` | Estimated cost in USD. |
+| `latency` | `float \| None` | Request latency in seconds. |
+| `status_code` | `int \| None` | HTTP-style status code (200 = OK, 400+ = error). |
+| `customer_identifier` | `str \| None` | User/customer identifier for grouping. |
+| `customer_email` | `str \| None` | Customer email address. |
+| `customer_name` | `str \| None` | Customer display name. |
+| `metadata` | `dict \| None` | Arbitrary key-value metadata. |
+| `stream` | `bool \| None` | Whether the request used streaming. |
+
+<Note>
+All fields are optional except in the context of `validate_and_separate_params()`, which enforces minimum requirements for the Respan API.
+</Note>
+
+### RespanFullLogParams
+
+Extended version of `RespanLogParams` with backend-only fields. Used internally by the Respan backend — **integrations should not use this directly**.
+
+Additional fields beyond `RespanLogParams`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `log_type` | `LogType` | Classification: `"chat"`, `"embedding"`, `"tool"`, etc. |
+| `organization_id` | `int` | Respan organization ID. |
+| `is_batch` | `bool` | Whether this is a batch API request. |
+| `failed` | `bool` | Whether the request failed. |
+
+### Message
+
+```python
+from respan_sdk import Message
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | `str` | Message role: `"system"`, `"user"`, `"assistant"`, `"tool"`. |
+| `content` | `str \| None` | Text content of the message. |
+| `tool_calls` | `list \| None` | Tool calls made by the assistant. |
+
+### Usage
+
+```python
+from respan_sdk import Usage
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `prompt_tokens` | `int` | Input token count. |
+| `completion_tokens` | `int` | Output token count. |
+| `total_tokens` | `int` | Total token count. |
+
+## Constants
+
+### Log type constants
+
+Used by instrumentation plugins to set `respan.entity.log_type` on spans.
+
+```python
+from respan_sdk.constants.llm_logging import (
+    LOG_TYPE_WORKFLOW,     # "workflow"
+    LOG_TYPE_AGENT,        # "agent"
+    LOG_TYPE_TOOL,         # "tool"
+    LOG_TYPE_GENERATION,   # "generation"
+    LOG_TYPE_RESPONSE,     # "response"
+    LOG_TYPE_HANDOFF,      # "handoff"
+    LOG_TYPE_GUARDRAIL,    # "guardrail"
+    LOG_TYPE_CUSTOM,       # "custom"
+)
+```
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `LOG_TYPE_WORKFLOW` | `"workflow"` | Root-level workflow/trace span. |
+| `LOG_TYPE_AGENT` | `"agent"` | Agent execution span. |
+| `LOG_TYPE_TOOL` | `"tool"` | Tool/function call span. |
+| `LOG_TYPE_GENERATION` | `"generation"` | LLM generation (Chat Completions API). |
+| `LOG_TYPE_RESPONSE` | `"response"` | LLM response (Responses API). |
+| `LOG_TYPE_HANDOFF` | `"handoff"` | Agent-to-agent handoff. |
+| `LOG_TYPE_GUARDRAIL` | `"guardrail"` | Guardrail check span. |
+| `LOG_TYPE_CUSTOM` | `"custom"` | Custom user-defined span. |
+
+### LogType / LogTypeChoices
+
+```python
+from respan_sdk.constants.llm_logging import LogType, LogTypeChoices
+
+# LogType is a Literal type for type checking
+x: LogType = "chat"
+
+# LogTypeChoices is an enum for runtime validation
+LogTypeChoices.CHAT.value  # "chat"
+```
+
+### OTLP constants
+
+Wire-format keys for OTLP JSON serialization. Used by the exporter — not typically needed by integrations.
+
+```python
+from respan_sdk.constants.otlp_constants import (
+    OTLP_STRING_VALUE,       # "stringValue"
+    OTLP_INT_VALUE,          # "intValue"
+    OTLP_TRACE_ID_KEY,       # "traceId"
+    OTLP_SPAN_ID_KEY,        # "spanId"
+    OTLP_ATTRIBUTES_KEY,     # "attributes"
+    OTLP_RESOURCE_SPANS_KEY, # "resourceSpans"
+    # ... and more
+)
+```
+
+### Tracing constants
+
+```python
+from respan_sdk.constants.tracing_constants import (
+    RESPAN_TRACING_INGEST_ENDPOINT,    # "/v2/traces"
+    RESPAN_DOGFOOD_HEADER,             # "X-Respan-Dogfood"
+    resolve_tracing_ingest_endpoint,   # function
+)
+```
+
+## Filter types
+
+### FilterParamDict
+
+Dict-based filter specification for controlling span export. Used with the `export_filter` parameter on decorators.
+
+```python
+from respan_sdk import FilterParamDict
+
+# Only export spans where status_code is "ERROR"
+filter_spec: FilterParamDict = {
+    "status_code": {
+        "operator": "",       # "" means "equals"
+        "value": "ERROR"
+    }
+}
+```
+
+Supported operators: `""` (equals), `"not"`, `"gt"`, `"gte"`, `"lt"`, `"lte"`, `"contains"`, `"icontains"`, `"startswith"`, `"endswith"`, `"regex"`, `"in"`, `"not_in"`, `"empty"`, `"not_empty"`.
+
+### MetricFilterParam
+
+Single field filter condition.
+
+```python
+from respan_sdk import MetricFilterParam
+
+condition = MetricFilterParam(
+    field="status_code",
+    operator="gte",
+    value=400
+)
+```
+
+### FilterBundle
+
+Collection of filter conditions with AND logic.
+
+```python
+from respan_sdk import FilterBundle
+
+bundle = FilterBundle(filters=[
+    MetricFilterParam(field="model", operator="contains", value="gpt"),
+    MetricFilterParam(field="status_code", operator="", value=200),
+])
+```
+
+## Span attributes
+
+### RespanSpanAttributes
+
+Enum of Respan-specific span attribute keys.
+
+```python
+from respan_sdk.respan_types.span_types import RespanSpanAttributes
+
+RespanSpanAttributes.RESPAN_CUSTOMER_IDENTIFIER.value
+# "respan.customer_params.customer_identifier"
+
+RespanSpanAttributes.RESPAN_THREAD_IDENTIFIER.value
+# "respan.threads.thread_identifier"
+
+RespanSpanAttributes.RESPAN_METADATA.value
+# "respan.metadata"
+
+RespanSpanAttributes.RESPAN_TRACE_GROUP_ID.value
+# "respan.trace_group.group_identifier"
+```
+
+### RESPAN_SPAN_ATTRIBUTES_MAP
+
+Maps friendly parameter names to their full OTEL attribute keys.
+
+```python
+from respan_sdk.respan_types.span_types import RESPAN_SPAN_ATTRIBUTES_MAP
+
+RESPAN_SPAN_ATTRIBUTES_MAP["customer_identifier"]
+# "respan.customer_params.customer_identifier"
+
+RESPAN_SPAN_ATTRIBUTES_MAP["thread_identifier"]
+# "respan.threads.thread_identifier"
+```
+
+## Base types
+
+### RespanBaseModel
+
+All Respan types inherit from `RespanBaseModel`, which extends Pydantic's `BaseModel` with dict-compatible access methods.
+
+```python
+from respan_sdk.respan_types.base_types import RespanBaseModel
+```
+
+| Method | Description |
+|--------|-------------|
+| `__contains__(key)` | Check if a field exists: `"model" in params` |
+| `get(key, default)` | Dict-style access: `params.get("model", "unknown")` |
+| `__getitem__(key)` | Bracket access: `params["model"]` |
+| `__setitem__(key, value)` | Bracket assignment: `params["model"] = "gpt-4o"` |
+
+This means Respan types work interchangeably with both Pydantic attribute access (`params.model`) and dict-style access (`params["model"]`).

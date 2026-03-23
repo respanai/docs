@@ -14,9 +14,9 @@ Returns `True` if the value was set successfully.
 ## Example
 
 ```python
-from respan_tracing import RespanTelemetry, workflow, get_client
+from respan import Respan, workflow, get_client
 
-telemetry = RespanTelemetry(api_key="your-api-key")
+respan = Respan(api_key="your-api-key")
 
 @workflow(name="set_context")
 def set_context():

@@ -6,11 +6,11 @@ description: "Set up a custom or self-hosted LLM provider with the Respan gatewa
 <Accordion title="Set up Respan">
 1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
 2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
-3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) Or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
 </Accordion>
 
 <Accordion title="Use AI">
-Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+Add the [Docs MCP](/documentation/getting-started/ask-ai) To your AI coding tool to get help building with Respan. No API key needed.
 ```json
 {
   "mcpServers": {
@@ -31,12 +31,17 @@ Use Respan Gateway to route requests to your own self-hosted or custom LLM provi
 - A **Respan API key**
 - A running LLM endpoint that exposes an OpenAI-compatible API
 
+
+## What is Custom Provider?
+
+Set up a custom or self-hosted LLM provider with the Respan gateway. Use this for private models, on-premises deployments, or providers not yet natively supported.
+
 ## Setup
 
 <Steps>
 <Step title="Create a custom provider">
 
-Go to **Settings > Integrations** on [platform.respan.ai](https://platform.respan.ai/platform/api/integrations) and click **Add Custom Provider**.
+Go to **Settings > Integrations** on [platform.respan.ai](https://platform.respan.ai/platform/api/integrations) And click **Add Custom Provider**.
 
 Provide:
 - **Provider name** — A display name (e.g. "My vLLM Server")
@@ -74,7 +79,7 @@ print(response.choices[0].message.content)
 
 <Step title="Verify">
 
-Open the [Logs page](https://platform.respan.ai/platform/requests) to see your requests routed through the custom provider.
+Open the [Logs page](https://platform.respan.ai/platform/requests) To see your requests routed through the custom provider.
 
 </Step>
 </Steps>

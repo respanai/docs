@@ -1,0 +1,134 @@
+---
+title: "Tracing"
+description: "Trace BAML structured outputs with Respan."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://respan.ai/docs/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is BAML?
+
+[BAML](https://docs.boundaryml.com/) is a domain-specific language for building reliable LLM functions with structured outputs. It uses Pydantic-style type definitions and a compiler to generate type-safe client code. The Respan integration uses `respan-tracing` decorators to capture BAML function calls.
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install baml-py respan-tracing
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
+```
+
+</Step>
+
+<Step title="Create instrumentation module">
+
+Create a `baml_respan.py` module that wraps BAML client functions with `@task` decorators:
+
+```python
+from respan_tracing import RespanTelemetry, task
+from baml_client import b
+from baml_client.types import Collector
+
+telemetry = RespanTelemetry()
+
+def respan_baml_trace(func):
+    """Decorator that wraps a BAML function with Respan tracing."""
+    @task(name=func.__name__)
+    def wrapper(*args, **kwargs):
+        collector = Collector()
+        kwargs["baml_options"] = {"collector": collector}
+        result = func(*args, **kwargs)
+
+        # Extract BAML-specific metrics from collector
+        from respan_tracing import get_client
+        client = get_client()
+        for log in collector.logs:
+            client.update_current_span(
+                attributes={
+                    "baml.prompt_tokens": log.metadata.prompt_tokens,
+                    "baml.output_tokens": log.metadata.output_tokens,
+                    "baml.model": log.metadata.model,
+                }
+            )
+        return result
+    return wrapper
+
+# Wrap your BAML functions
+ExtractResume = respan_baml_trace(b.ExtractResume)
+ClassifyIntent = respan_baml_trace(b.ClassifyIntent)
+```
+
+</Step>
+
+<Step title="Use the instrumented functions">
+
+```python
+from baml_respan import ExtractResume
+
+result = ExtractResume(resume_text="John Doe, Software Engineer at Acme Corp...")
+print(result)
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your BAML function traces.
+
+</Step>
+</Steps>
+
+## Attributes
+
+### Via respan-tracing SDK
+
+```python
+from respan_tracing import get_client
+
+client = get_client()
+client.update_current_span(
+    respan_params={
+        "customer_identifier": "user-123",
+        "metadata": {"baml_function": "ExtractResume"},
+    }
+)
+```
+
+### Via gateway headers
+
+When using the Respan gateway, pass attributes as headers in your BAML client configuration:
+
+```
+X-Respan-Customer-Identifier: user-123
+```
+
+<Note>
+Looking for gateway integration? See [Gateway > BAML](/integrations/gateway/baml).
+</Note>
+

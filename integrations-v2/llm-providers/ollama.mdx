@@ -1,0 +1,205 @@
+---
+title: "Ollama"
+description: "Trace Ollama calls with Respan — auto-instrumented spans and full observability for local models."
+---
+
+<Accordion title="Set up Respan">
+1. **Sign up** — Create an account at [platform.respan.ai](https://platform.respan.ai)
+2. **Create an API key** — Generate one on the [API keys page](https://platform.respan.ai/platform/api/api-keys)
+3. **Add credits or a provider key** — Add credits on the [Credits page](https://platform.respan.ai/platform/api/credits) or connect your own provider key on the [Integrations page](https://platform.respan.ai/platform/api/integrations)
+</Accordion>
+
+<Accordion title="Use AI">
+Add the [Docs MCP](/documentation/getting-started/ask-ai) to your AI coding tool to get help building with Respan. No API key needed.
+```json
+{
+  "mcpServers": {
+    "respan-docs": {
+      "url": "https://docs.respan.ai/mcp"
+    }
+  }
+}
+```
+</Accordion>
+
+## What is Ollama?
+
+[Ollama](https://github.com/ollama/ollama-python) is a tool for running large language models locally. The Ollama Python SDK lets you interact with locally-hosted models like Llama, Mistral, and Gemma. Respan can auto-instrument all Ollama calls for tracing and observability.
+
+<Note>
+Ollama runs models locally, so only **Tracing** setup is available. Gateway routing is not applicable for local model servers.
+</Note>
+
+## Setup
+
+<Steps>
+<Step title="Install packages">
+
+```bash
+pip install respan-ai opentelemetry-instrumentation-ollama ollama python-dotenv
+```
+
+</Step>
+
+<Step title="Set environment variables">
+
+```bash
+export RESPAN_API_KEY="YOUR_RESPAN_API_KEY"
+```
+
+No provider API key needed — Ollama runs models locally.
+
+</Step>
+
+<Step title="Initialize and run">
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import ollama
+from respan import Respan
+
+# Auto-discover and activate all installed instrumentors (Traceloop)
+respan = Respan(is_auto_instrument=True)
+
+# Calls go to local Ollama server, auto-traced by Respan
+response = ollama.chat(
+    model="llama3.1",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response["message"]["content"])
+respan.flush()
+```
+
+</Step>
+
+<Step title="View your trace">
+
+Open the [Traces page](https://platform.respan.ai/platform/traces) to see your auto-instrumented LLM spans.
+
+</Step>
+</Steps>
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | `None` | Falls back to `RESPAN_API_KEY` env var. |
+| `base_url` | `str \| None` | `None` | Falls back to `RESPAN_BASE_URL` env var. |
+| `is_auto_instrument` | `bool \| None` | `False` | Auto-discover and activate all installed instrumentors via OpenTelemetry entry points. |
+| `customer_identifier` | `str \| None` | `None` | Default customer identifier for all spans. |
+| `metadata` | `dict \| None` | `None` | Default metadata attached to all spans. |
+| `environment` | `str \| None` | `None` | Environment tag (e.g. `"production"`). |
+
+## Attributes
+
+Attach customer identifiers, thread IDs, and metadata to spans.
+
+### In Respan()
+
+Set defaults at initialization — these apply to all spans.
+
+```python
+from respan import Respan
+
+respan = Respan(
+    is_auto_instrument=True,
+    customer_identifier="user_123",
+    metadata={"service": "local-chat", "version": "1.0.0"},
+)
+```
+
+### With propagate_attributes
+
+Override per-request using a context manager.
+
+```python
+import ollama
+from respan import Respan, workflow, propagate_attributes
+
+respan = Respan(
+    is_auto_instrument=True,
+    metadata={"service": "local-chat", "version": "1.0.0"},
+)
+
+@workflow(name="handle_request")
+def handle_request(user_id: str, question: str):
+    with propagate_attributes(
+        customer_identifier=user_id,
+        thread_identifier="conv_001",
+        metadata={"plan": "pro"},
+    ):
+        response = ollama.chat(
+            model="llama3.1",
+            messages=[{"role": "user", "content": question}],
+        )
+        print(response["message"]["content"])
+```
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `customer_identifier` | `str` | Identifies the end user in Respan analytics. |
+| `thread_identifier` | `str` | Groups related messages into a conversation. |
+| `metadata` | `dict` | Custom key-value pairs. Merged with default metadata. |
+
+## Decorators
+
+Use `@workflow` and `@task` to create structured trace hierarchies.
+
+```python
+import ollama
+from respan import Respan, workflow, task
+
+respan = Respan(is_auto_instrument=True)
+
+@task(name="generate_outline")
+def outline(topic: str) -> str:
+    response = ollama.chat(
+        model="llama3.1",
+        messages=[
+            {"role": "user", "content": f"Create a brief outline about: {topic}"},
+        ],
+    )
+    return response["message"]["content"]
+
+@workflow(name="content_pipeline")
+def pipeline(topic: str):
+    plan = outline(topic)
+    response = ollama.chat(
+        model="llama3.1",
+        messages=[
+            {"role": "user", "content": f"Write content from this outline: {plan}"},
+        ],
+    )
+    print(response["message"]["content"])
+
+pipeline("Benefits of API gateways")
+respan.flush()
+```
+
+## Examples
+
+### Basic chat
+
+```python
+response = ollama.chat(
+    model="llama3.1",
+    messages=[{"role": "user", "content": "Say hello in three languages."}],
+)
+print(response["message"]["content"])
+```
+
+### Streaming
+
+```python
+stream = ollama.chat(
+    model="llama3.1",
+    messages=[{"role": "user", "content": "Write a haiku about Python."}],
+    stream=True,
+)
+for chunk in stream:
+    print(chunk["message"]["content"], end="", flush=True)
+```
